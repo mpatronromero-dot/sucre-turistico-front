@@ -5,26 +5,26 @@ export const Alojamientos = () => {
   const [alojamientos, setAlojamientos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  // Imágenes de prueba para simular la galería de tu captura
+  // 1. Estados para los filtros (Facets)
+  const [filtroMunicipio, setFiltroMunicipio] = useState('');
+  const [filtroPrecio, setFiltroPrecio] = useState('');
+
   const mockImages = [
-    "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80", // Casa playa
-    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80", // Cuarto
-    "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&q=80", // Baño
-    "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&q=80"  // Piscina
+    "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80",
+    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+    "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&q=80",
+    "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&q=80"
   ];
 
   useEffect(() => {
     const cargarDatos = async () => {
       const data = await getAlojamientos();
-      // Si el backend aún no tiene datos de alojamientos, inyectamos uno de prueba
       if (data.length === 0) {
-        setAlojamientos([{
-          id: 1,
-          nombre: "Hermoso apartamento frente al mar, 4 Habitaciones",
-          municipio: "Coveñas",
-          precio: "1.000.000",
-          tipo: "Apartamento"
-        }]);
+        // Agregamos dos alojamientos distintos para probar los filtros
+        setAlojamientos([
+          { id: 1, nombre: "Hermoso apartamento frente al mar", municipio: "Coveñas", precio: "1000000", tipo: "Apartamento" },
+          { id: 2, nombre: "Cabaña Rústica Familiar", municipio: "Tolú", precio: "350000", tipo: "Cabaña" }
+        ]);
       } else {
         setAlojamientos(data);
       }
@@ -33,70 +33,113 @@ export const Alojamientos = () => {
     cargarDatos();
   }, []);
 
+  // 2. Lógica de Filtrado Dinámico
+  const alojamientosFiltrados = alojamientos.filter((lugar) => {
+    // Verifica si el municipio coincide (o si no hay filtro seleccionado)
+    const coincideMunicipio = filtroMunicipio === '' || lugar.municipio === filtroMunicipio;
+    
+    // Verifica el rango de precios
+    let coincidePrecio = true;
+    const precioNumerico = parseInt(String(lugar.precio).replace(/\./g, '')); // Limpia los puntos si vienen del backend
+    
+    if (filtroPrecio === 'economico') coincidePrecio = precioNumerico <= 500000;
+    if (filtroPrecio === 'premium') coincidePrecio = precioNumerico > 500000;
+
+    return coincideMunicipio && coincidePrecio;
+  });
+
   if (cargando) return <div className="container py-5 text-center"><h5>Cargando alojamientos...</h5></div>;
 
   return (
     <div className="container py-4">
       <h2 className="fw-bold mb-4">Alojamientos en Sucre</h2>
       
-      {alojamientos.map((lugar) => (
-        <div key={lugar.id} className="card shadow-sm border-0 mb-5">
-          <div className="card-body p-4">
+      <div className="row">
+        {/* BARRA LATERAL (SIDEBAR DE FILTROS) */}
+        <div className="col-lg-3 mb-4">
+          <div className="card shadow-sm border-0 p-4 sticky-top" style={{ top: '20px' }}>
+            <h5 className="fw-bold mb-4"><i className="bi bi-funnel-fill text-primary"></i> Filtros</h5>
             
-            {/* Encabezado y Precio (Estilo de la imagen de referencia) */}
-            <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap">
-              <div>
-                <h3 className="card-title fw-bold">{lugar.nombre}</h3>
-                <p className="text-muted mb-0"><i className="bi bi-geo-alt-fill"></i> {lugar.municipio} • {lugar.tipo}</p>
-                
-                {/* Enlaces estilo menú */}
-                <div className="d-flex gap-3 mt-2 fs-6">
-                  <a href="#" className="text-dark fw-bold text-decoration-underline">Fotos</a>
-                  <a href="#" className="text-secondary text-decoration-none">Opiniones</a>
-                  <a href="#" className="text-secondary text-decoration-none">Info</a>
-                  <a href="#" className="text-secondary text-decoration-none">Mapa</a>
-                </div>
-              </div>
+            {/* Filtro: Municipio */}
+            <div className="mb-4">
+              <label className="fw-semibold mb-2">Ubicación</label>
+              <select 
+                className="form-select" 
+                value={filtroMunicipio} 
+                onChange={(e) => setFiltroMunicipio(e.target.value)}
+              >
+                <option value="">Todos los municipios</option>
+                <option value="Coveñas">Coveñas</option>
+                <option value="Tolú">Santiago de Tolú</option>
+                <option value="San Onofre">San Onofre</option>
+              </select>
+            </div>
 
-              {/* Caja verde de precio */}
-              <div className="bg-success bg-opacity-10 p-3 rounded text-end border border-success border-opacity-25 mt-3 mt-md-0">
-                <span className="d-block text-muted small fw-bold"><i className="bi bi-house-door-fill text-danger"></i> Sucre Turístico</span>
-                <span className="fs-4 fw-bold text-dark">$ {lugar.precio || "350.000"}</span>
-                <button className="btn btn-success fw-bold d-block w-100 mt-2">Ver oferta {'>'}</button>
+            {/* Filtro: Rango de Precio */}
+            <div className="mb-4">
+              <label className="fw-semibold mb-2">Rango por noche</label>
+              <div className="form-check mb-2">
+                <input className="form-check-input" type="radio" name="precio" id="precioTodos" value="" checked={filtroPrecio === ''} onChange={(e) => setFiltroPrecio(e.target.value)} />
+                <label className="form-check-label" htmlFor="precioTodos">Cualquier precio</label>
+              </div>
+              <div className="form-check mb-2">
+                <input className="form-check-input" type="radio" name="precio" id="precioEco" value="economico" checked={filtroPrecio === 'economico'} onChange={(e) => setFiltroPrecio(e.target.value)} />
+                <label className="form-check-label" htmlFor="precioEco">Económico (Hasta $500.000)</label>
+              </div>
+              <div className="form-check">
+                <input className="form-check-input" type="radio" name="precio" id="precioPremium" value="premium" checked={filtroPrecio === 'premium'} onChange={(e) => setFiltroPrecio(e.target.value)} />
+                <label className="form-check-label" htmlFor="precioPremium">Premium (Más de $500.000)</label>
               </div>
             </div>
 
-            {/* Filtros tipo Píldoras */}
-            <div className="d-flex gap-2 mb-3 overflow-auto pb-2">
-              <span className="badge rounded-pill bg-primary text-white px-3 py-2">Todas las fotos (52)</span>
-              <span className="badge rounded-pill bg-light text-dark border px-3 py-2">Habitaciones (11)</span>
-              <span className="badge rounded-pill bg-light text-dark border px-3 py-2">Baño (7)</span>
-              <span className="badge rounded-pill bg-light text-dark border px-3 py-2">Piscina (5)</span>
-            </div>
-
-            {/* Cuadrícula de Imágenes (Grid Mampostería simulada) */}
-            <div className="row g-2">
-              <div className="col-md-6">
-                <img src={mockImages[0]} alt="Principal" className="img-fluid rounded w-100 h-100 object-fit-cover" style={{ minHeight: '300px' }} />
-              </div>
-              <div className="col-md-6">
-                <div className="row g-2 h-100">
-                  <div className="col-6">
-                    <img src={mockImages[1]} alt="Habitación" className="img-fluid rounded w-100 h-100 object-fit-cover" />
-                  </div>
-                  <div className="col-6">
-                    <img src={mockImages[2]} alt="Baño" className="img-fluid rounded w-100 h-100 object-fit-cover" />
-                  </div>
-                  <div className="col-12 mt-2">
-                    <img src={mockImages[3]} alt="Piscina" className="img-fluid rounded w-100 object-fit-cover" style={{ height: '145px' }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            <button className="btn btn-outline-danger w-100" onClick={() => { setFiltroMunicipio(''); setFiltroPrecio(''); }}>
+              Limpiar filtros
+            </button>
           </div>
         </div>
-      ))}
+
+        {/* LISTADO DE RESULTADOS */}
+        <div className="col-lg-9">
+          {alojamientosFiltrados.length === 0 ? (
+            <div className="alert alert-warning border-0 shadow-sm text-center py-5">
+              <h5 className="fw-bold mb-1">No hay resultados</h5>
+              <p className="mb-0 text-muted">Intenta cambiar los filtros para ver más opciones de hospedaje.</p>
+            </div>
+          ) : (
+            alojamientosFiltrados.map((lugar) => (
+              <div key={lugar.id} className="card shadow-sm border-0 mb-4">
+                <div className="card-body p-4">
+                  <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap">
+                    <div>
+                      <h3 className="card-title fw-bold">{lugar.nombre}</h3>
+                      <p className="text-muted mb-0"><i className="bi bi-geo-alt-fill"></i> {lugar.municipio} • {lugar.tipo}</p>
+                    </div>
+                    <div className="bg-success bg-opacity-10 p-3 rounded text-end border border-success border-opacity-25 mt-3 mt-md-0">
+                      <span className="d-block text-muted small fw-bold">Sucre Turístico</span>
+                      <span className="fs-4 fw-bold text-dark">$ {new Intl.NumberFormat('es-CO').format(lugar.precio)}</span>
+                      <button className="btn btn-success fw-bold d-block w-100 mt-2">Ver oferta {'>'}</button>
+                    </div>
+                  </div>
+                  
+                  {/* Cuadrícula de Imágenes simplificada */}
+                  <div className="row g-2 mt-3">
+                    <div className="col-md-6">
+                      <img src={mockImages[0]} alt="Principal" className="img-fluid rounded w-100 h-100 object-fit-cover" style={{ minHeight: '250px' }} />
+                    </div>
+                    <div className="col-md-6">
+                      <div className="row g-2 h-100">
+                        <div className="col-6"><img src={mockImages[1]} className="img-fluid rounded w-100 h-100 object-fit-cover" /></div>
+                        <div className="col-6"><img src={mockImages[2]} className="img-fluid rounded w-100 h-100 object-fit-cover" /></div>
+                        <div className="col-12 mt-2"><img src={mockImages[3]} className="img-fluid rounded w-100 object-fit-cover" style={{ height: '120px' }} /></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };
