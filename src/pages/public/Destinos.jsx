@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDestinos } from '../../api/destinosService';
+import { Link } from 'react-router-dom';
 
 export const Destinos = () => {
   const [destinos, setDestinos] = useState([]);
@@ -32,7 +33,9 @@ export const Destinos = () => {
                 </div>
                 <h6 className="card-subtitle mb-2 text-muted"><i className="bi bi-geo-alt-fill"></i> {destino.municipio}</h6>
                 <p className="card-text">{destino.descripcion}</p>
-                <button className="btn btn-outline-primary btn-sm w-100 mt-2">Ver detalles</button>
+                <Link to={`/destinos/${destino.id}`} className="btn btn-outline-primary btn-sm w-100 mt-2">
+                  Ver detalles
+                </Link>
               </div>
             </div>
           </div>

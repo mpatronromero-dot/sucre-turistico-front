@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getAlojamientos } from '../../api/alojamientosService';
 
 export const Alojamientos = () => {
-  const [alojamientos, setAlojamientos] = useState([]);
+ const [alojamientos, setAlojamientos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   // 1. Estados para los filtros (Facets)
@@ -13,22 +13,25 @@ export const Alojamientos = () => {
     "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80",
     "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
     "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&q=80",
-    "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&q=80"
+    "https://images.unsplash.com/photo-1540541338287-41700207dca6?w=800&q=80"
   ];
 
   useEffect(() => {
     const cargarDatos = async () => {
-      const data = await getAlojamientos();
-      if (data.length === 0) {
-        // Agregamos dos alojamientos distintos para probar los filtros
-        setAlojamientos([
-          { id: 1, nombre: "Hermoso apartamento frente al mar", municipio: "Coveñas", precio: "1000000", tipo: "Apartamento" },
-          { id: 2, nombre: "Cabaña Rústica Familiar", municipio: "Tolú", precio: "350000", tipo: "Cabaña" }
-        ]);
-      } else {
-        setAlojamientos(data);
+      try {
+        // Hacemos la llamada real a tu API Gateway en el puerto 3005
+        const response = await fetch('http://localhost:3005/api/alojamientos');
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          // Guardamos los datos de Railway en la variable alojamientos
+          setAlojamientos(result.data);
+        }
+      } catch (error) {
+        console.error("Error al cargar los alojamientos desde la nube:", error);
+      } finally {
+        setCargando(false);
       }
-      setCargando(false);
     };
     cargarDatos();
   }, []);
@@ -40,11 +43,12 @@ export const Alojamientos = () => {
     
     // Verifica el rango de precios
     let coincidePrecio = true;
+    /*
     const precioNumerico = parseInt(String(lugar.precio).replace(/\./g, '')); // Limpia los puntos si vienen del backend
     
     if (filtroPrecio === 'economico') coincidePrecio = precioNumerico <= 500000;
     if (filtroPrecio === 'premium') coincidePrecio = precioNumerico > 500000;
-
+    */
     return coincideMunicipio && coincidePrecio;
   });
 
@@ -111,14 +115,17 @@ export const Alojamientos = () => {
                 <div className="card-body p-4">
                   <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap">
                     <div>
-                      <h3 className="card-title fw-bold">{lugar.nombre}</h3>
-                      <p className="text-muted mb-0"><i className="bi bi-geo-alt-fill"></i> {lugar.municipio} • {lugar.tipo}</p>
-                    </div>
-                    <div className="bg-success bg-opacity-10 p-3 rounded text-end border border-success border-opacity-25 mt-3 mt-md-0">
-                      <span className="d-block text-muted small fw-bold">Sucre Turístico</span>
-                      <span className="fs-4 fw-bold text-dark">$ {new Intl.NumberFormat('es-CO').format(lugar.precio)}</span>
-                      <button className="btn btn-success fw-bold d-block w-100 mt-2">Ver oferta {'>'}</button>
-                    </div>
+              <h3 className="card-title fw-bold">{lugar.nombre}</h3>
+              <p className="text-muted mb-0"><i className="bi bi-geo-alt-fill"></i> {lugar.municipio} • {lugar.tipo}</p>
+              {/* Aquí agregamos la descripción que viene de la base de datos */}
+              <p className="mt-2 text-secondary">{lugar.descripcion}</p>
+            </div>
+            <div className="bg-success bg-opacity-10 p-3 rounded text-end border border-success border-opacity-25 mt-3 mt-md-0">
+              {/* Como no hay precio, cambiamos este texto temporalmente */}
+              <span className="d-block text-muted small fw-bold">Sucre Turístico</span>
+              <span className="fs-5 fw-bold text-dark d-block mb-2">¡Reserva Ahora!</span>
+              <button className="btn btn-success fw-bold d-block w-100 mt-2">Ver oferta {'>'}</button>
+            </div>
                   </div>
                   
                   {/* Cuadrícula de Imágenes simplificada */}

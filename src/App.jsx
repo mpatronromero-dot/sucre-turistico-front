@@ -8,6 +8,7 @@ import { Gastronomia } from './pages/public/Gastronomia';
 import { Experiencias } from './pages/public/Experiencias'; 
 import { Eventos } from './pages/public/Eventos';  
 import { Admin } from './pages/admin/Admin';
+import { DestinoDetalle } from './pages/public/DestinoDetalle';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<Home />} />
          <Route path="/alojamientos" element={<Alojamientos />} />
          <Route path="/destinos" element={<Destinos />} />
+        <Route path="/destinos/:id" element={<DestinoDetalle />} />
         <Route path="/gastronomia" element={<Gastronomia />} />
         <Route path="/experiencias" element={<Experiencias />} />
         <Route path="/eventos" element={<Eventos />} />
