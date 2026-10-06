@@ -2,35 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { getGastronomia } from '../../api/gastronomiaService';
 
 export const Gastronomia = () => {
-  const [restaurantes, setRestaurantes] = useState([]);
+ const [restaurantes, setRestaurantes] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   // Estados para los filtros
   const [filtroMunicipio, setFiltroMunicipio] = useState('');
   const [filtroEspecialidad, setFiltroEspecialidad] = useState('');
 
-  // Imágenes de prueba de comida
   const mockImages = [
-    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80", // Plato principal (Pescado/Asado)
-    "https://images.unsplash.com/photo-1579684947550-22e945225d9a?w=800&q=80", // Sopa/Sancocho
-    "https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&q=80", // Mariscos
-    "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=800&q=80"  // Restaurante
+    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80",
+    "https://images.unsplash.com/photo-1579684947550-22e945225d9a?w=800&q=80",
+    "https://images.unsplash.com/photo-1550847844-5315695dadac?w=800&q=80",
+    "https://images.unsplash.com/photo-1544148103-0773bf18d302?w=800&q=80"
   ];
 
   useEffect(() => {
     const cargarDatos = async () => {
-      const data = await getGastronomia();
-      if (data.length === 0) {
-        // Datos de prueba inyectados si el backend está apagado o vacío
-        setRestaurantes([
-          { id: 1, nombre: "Restaurante El Pargo Rojo", municipio: "Tolú", especialidad: "Mariscos", precioPromedio: "45000" },
-          { id: 2, nombre: "Comedor Tradicional Coveñas", municipio: "Coveñas", especialidad: "Tradicional", precioPromedio: "25000" },
-          { id: 3, nombre: "Pizzería del Golfo", municipio: "Tolú", especialidad: "Comida Rápida", precioPromedio: "18000" }
-        ]);
-      } else {
-        setRestaurantes(data);
+      try {
+        const response = await fetch('http://localhost:3005/api/gastronomia');
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          setRestaurantes(result.data);
+        }
+      } catch (error) {
+        console.error("Error al cargar gastronomía:", error);
+      } finally {
+        setCargando(false);
       }
-      setCargando(false);
     };
     cargarDatos();
   }, []);
@@ -91,18 +90,20 @@ export const Gastronomia = () => {
             </div>
           ) : (
             restaurantesFiltrados.map((lugar) => (
-              <div key={lugar.id} className="card shadow-sm border-0 mb-4">
-                <div className="card-body p-4">
-                  <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap">
-                    <div>
-                      <h3 className="card-title fw-bold">{lugar.nombre}</h3>
-                      <p className="text-muted mb-0"><i className="bi bi-geo-alt-fill"></i> {lugar.municipio} • {lugar.especialidad}</p>
-                    </div>
-                    <div className="bg-warning bg-opacity-10 p-3 rounded text-end border border-warning border-opacity-25 mt-3 mt-md-0">
-                      <span className="d-block text-muted small fw-bold">Platos desde</span>
-                      <span className="fs-4 fw-bold text-dark">$ {new Intl.NumberFormat('es-CO').format(lugar.precioPromedio)}</span>
-                      <button className="btn btn-warning fw-bold d-block w-100 mt-2 text-dark">Ver Menú {'>'}</button>
-                    </div>
+              <div className="card shadow-sm border-0 mb-4">
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap">
+            <div>
+              <h3 className="card-title fw-bold text-success">{lugar.nombre_plato}</h3>
+              <p className="text-muted mb-0"><i className="bi bi-geo-alt-fill"></i> {lugar.lugar_tipico}</p>
+              <p className="mt-2 text-secondary">{lugar.descripcion}</p>
+            </div>
+            <div className="bg-success bg-opacity-10 p-3 rounded text-end border border-success border-opacity-25 mt-3 mt-md-0">
+              <span className="d-block text-muted small fw-bold">Gastronomía</span>
+              <span className="fs-5 fw-bold text-dark d-block mb-2">Sucre Turístico</span>
+              <button className="btn btn-success fw-bold d-block w-100 mt-2">Ver Plato {'>'}</button>
+            </div>
+          </div>
                   </div>
                   
                   <div className="row g-2 mt-3">
@@ -118,7 +119,7 @@ export const Gastronomia = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+
             ))
           )}
         </div>
