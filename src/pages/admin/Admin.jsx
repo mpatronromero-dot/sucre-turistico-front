@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { FormularioAlojamiento } from '../../components/FormularioAlojamiento';
 import { FormularioGastronomia } from '../../components/FormularioGastronomia';
 import { FormularioPlatos } from '../../components/FormularioPlatos';
+import { FormularioExperiencias } from '../../components/FormularioExperiencias';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -234,25 +235,10 @@ export const Admin = () => {
         <FormularioPlatos />
         </div>
         )}
-        {/* VISTA 4: FORMULARIO EXPERIENCIAS */}
+       {/* VISTA 4: FORMULARIO EXPERIENCIAS */}
         {vistaActiva === 'experiencias' && (
-          <div className="card shadow-sm border-0 rounded-4 p-4 mx-auto" style={{ maxWidth: '800px' }}>
-            <h4 className="mb-4 text-warning fw-bold">Registrar Nueva Experiencia</h4>
-            <form onSubmit={handleSubmitExperiencia}>
-              <div className="mb-3">
-                <label className="form-label fw-bold">Nombre de la Experiencia</label>
-                <input type="text" className="form-control" name="nombre" value={experiencia.nombre} onChange={(e) => setExperiencia({...experiencia, [e.target.name]: e.target.value})} required />
-              </div>
-              <div className="mb-3">
-                <label className="form-label fw-bold">Costo Estimado</label>
-                <input type="text" className="form-control" name="costo_estimado" value={experiencia.costo_estimado} onChange={(e) => setExperiencia({...experiencia, [e.target.name]: e.target.value})} required />
-              </div>
-              <div className="mb-4">
-                <label className="form-label fw-bold">Descripción</label>
-                <textarea className="form-control" name="descripcion" value={experiencia.descripcion} onChange={(e) => setExperiencia({...experiencia, [e.target.name]: e.target.value})} rows="3" required></textarea>
-              </div>
-              <button type="submit" className="btn btn-warning w-100 fw-bold text-dark">Guardar Experiencia</button>
-            </form>
+          <div className="d-flex flex-column gap-4 pb-5 mx-auto" style={{ maxWidth: '800px' }}>
+             <FormularioExperiencias />
           </div>
         )}
 

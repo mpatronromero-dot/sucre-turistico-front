@@ -11,29 +11,42 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-dark bg-primary shadow-sm py-3">
-      <div className="container d-flex justify-content-between align-items-center">
-        {/* Logo / Nombre del sitio (Redirige al Home) */}
-        <Link className="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2 m-0" to="/">
-          <i className="bi bi-water fs-3"></i> Sucre Turístico
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+      <div className="container">
+        <Link className="navbar-brand fw-bold" to="/">
+          🌊 Sucre Turístico
         </Link>
-
-        {/* Único botón de la barra: Iniciar Sesión / Panel Admin */}
-        <div className="d-flex align-items-center gap-2">
-          {token ? (
-            <>
-              <Link to="/admin" className="btn btn-outline-light fw-bold rounded-pill px-4">
-                <i className="bi bi-speedometer2 me-1"></i> Admin
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        <div className="collapse navbar-collapse" id="navbarNav">
+          <ul className="navbar-nav ms-auto">
+            <li className="nav-item">
+              <Link className="nav-link" to="/destinos">Destinos</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/alojamientos">Alojamientos</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/gastronomia">Gastronomía</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/experiencias">Experiencias</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/eventos">Eventos</Link>
+            </li>
+            <li className="nav-item ms-lg-2">
+              <Link className="btn btn-outline-light btn-sm mt-1 mt-lg-0" to="/admin">
+                Iniciar Sesión
               </Link>
-              <button onClick={handleLogout} className="btn btn-danger fw-bold rounded-pill px-3" title="Cerrar Sesión">
-                <i className="bi bi-box-arrow-right"></i>
-              </button>
-            </>
-          ) : (
-            <Link to="/login" className="btn btn-outline-light fw-bold rounded-pill px-4">
-              Iniciar Sesión
-            </Link>
-          )}
+            </li>
+          </ul>
         </div>
       </div>
     </nav>
