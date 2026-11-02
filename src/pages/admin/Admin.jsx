@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
 import { FormularioAlojamiento } from '../../components/FormularioAlojamiento';
+import { GestionHabitaciones } from '../../components/GestionHabitaciones';
 import { FormularioGastronomia } from '../../components/FormularioGastronomia';
 import { FormularioPlatos } from '../../components/FormularioPlatos';
 import { FormularioExperiencias } from '../../components/FormularioExperiencias';
+import { FormularioEventos } from '../../components/FormularioEventos';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -224,10 +226,13 @@ export const Admin = () => {
           </div>
         )}
 
-        {/* VISTA 2: FORMULARIO ALOJAMIENTOS */}
-        {vistaActiva === 'alojamientos' && (
-        <FormularioAlojamiento />
-        )}
+       {/* VISTA 2: FORMULARIO ALOJAMIENTOS */}
+{vistaActiva === 'alojamientos' && (
+  <div className="d-flex flex-column gap-5 pb-5 mx-auto" style={{ maxWidth: '900px' }}>
+    <FormularioAlojamiento />
+    <GestionHabitaciones />
+  </div>
+)}
         {/* VISTA 3: FORMULARIO GASTRONOMIA */}
         {vistaActiva === 'gastronomia' && (
         <div className="d-flex flex-column gap-4 pb-5">
@@ -242,37 +247,10 @@ export const Admin = () => {
           </div>
         )}
 
-        {/* VISTA 5: FORMULARIO EVENTOS */}
+      {/* VISTA 5: FORMULARIO EVENTOS */}
         {vistaActiva === 'eventos' && (
-          <div className="card shadow-sm border-0 rounded-4 p-4 mx-auto" style={{ maxWidth: '800px' }}>
-            <h4 className="mb-4 text-info fw-bold">Registrar Nuevo Evento</h4>
-            <form onSubmit={handleSubmitEvento}>
-              <div className="row mb-3">
-                <div className="col-md-6">
-                  <label className="form-label fw-bold">Nombre del Evento</label>
-                  <input type="text" className="form-control" name="nombre" value={evento.nombre} onChange={(e) => setEvento({...evento, [e.target.name]: e.target.value})} required />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-bold">Fecha / Época</label>
-                  <input type="text" className="form-control" name="fecha" value={evento.fecha} onChange={(e) => setEvento({...evento, [e.target.name]: e.target.value})} required />
-                </div>
-              </div>
-              <div className="mb-3">
-                <label className="form-label fw-bold">Municipio</label>
-                <select className="form-select" name="municipio" value={evento.municipio} onChange={(e) => setEvento({...evento, [e.target.name]: e.target.value})} required>
-                  <option value="">Selecciona uno...</option>
-                  <option value="Sincelejo">Sincelejo</option>
-                  <option value="Coveñas">Coveñas</option>
-                  <option value="San Onofre">San Onofre</option>
-                  <option value="Santiago de Tolú">Santiago de Tolú</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="form-label fw-bold">Descripción</label>
-                <textarea className="form-control" name="descripcion" value={evento.descripcion} onChange={(e) => setEvento({...evento, [e.target.name]: e.target.value})} rows="3" required></textarea>
-              </div>
-              <button type="submit" className="btn btn-info text-white w-100 fw-bold">Guardar Evento</button>
-            </form>
+          <div className="d-flex flex-column gap-4 pb-5 mx-auto" style={{ maxWidth: '800px' }}>
+            <FormularioEventos />
           </div>
         )}
 
