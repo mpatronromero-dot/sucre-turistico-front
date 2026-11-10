@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { FormularioAlojamiento } from '../../components/FormularioAlojamiento';
 import { GestionHabitaciones } from '../../components/GestionHabitaciones';
 import { FormularioGastronomia } from '../../components/FormularioGastronomia';
-import { FormularioPlatos } from '../../components/FormularioPlatos';
 import { FormularioExperiencias } from '../../components/FormularioExperiencias';
 import { FormularioEventos } from '../../components/FormularioEventos';
 import { useNavigate } from 'react-router-dom';
@@ -237,7 +236,6 @@ export const Admin = () => {
         {vistaActiva === 'gastronomia' && (
         <div className="d-flex flex-column gap-4 pb-5">
         <FormularioGastronomia />
-        <FormularioPlatos />
         </div>
         )}
        {/* VISTA 4: FORMULARIO EXPERIENCIAS */}
