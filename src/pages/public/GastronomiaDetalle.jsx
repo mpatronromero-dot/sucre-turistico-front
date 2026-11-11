@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import api from '../../api/axiosConfig';
 
 export const GastronomiaDetalle = () => {
   const { id } = useParams();
@@ -22,13 +23,20 @@ export const GastronomiaDetalle = () => {
   useEffect(() => {
     const cargarDetalle = async () => {
       try {
-        const response = await fetch(`http://localhost:3003/api/restaurantes/${id}/menu`);
-        const result = await response.json();
-        if (result.status === 'success') {
-          setDatos(result.data);
+        const response = await api.get(`/gastronomia/${id}`);
+        const result = response.data;
+        
+        if (result.status === 'success' && result.data) {
+          const restauranteObj = result.data.restaurante || result.data;
+          const menuArray = result.data.menu || restauranteObj.menu || [];
+          
+          setDatos({
+            restaurante: restauranteObj,
+            menu: menuArray
+          });
         }
       } catch (error) {
-        console.error("Error cargando carta:", error);
+        console.error("Error cargando la carta del restaurante:", error);
       } finally {
         setCargando(false);
       }
@@ -45,15 +53,10 @@ export const GastronomiaDetalle = () => {
     setEnviandoReserva(true);
 
     try {
-      const response = await fetch('http://localhost:3003/api/reservas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...reserva, restaurante_id: id })
-      });
+      const response = await api.post('/gastronomia/reservas', { ...reserva, restaurante_id: id });
+      const result = response.data;
 
-      const result = await response.json();
-
-      if (response.ok && result.status === 'success') {
+      if (result.status === 'success') {
         setMostrarModal(false);
         Swal.fire('¡Reserva Enviada!', 'El restaurante se pondrá en contacto contigo para confirmar tu mesa.', 'success');
         setReserva({ nombre_cliente: '', telefono_cliente: '', fecha: '', hora: '', numero_personas: 2 });
@@ -71,6 +74,8 @@ export const GastronomiaDetalle = () => {
   if (cargando) return <div className="text-center py-5"><div className="spinner-border text-success"></div></div>;
   if (!datos.restaurante) return <div className="text-center py-5"><h4>Restaurante no encontrado</h4></div>;
 
+  const tipoComidaText = datos.restaurante.tipo || datos.restaurante.tipo_comida || 'Gastronomía';
+
   return (
     <div className="container py-5">
       <button className="btn btn-outline-secondary mb-4" onClick={() => navigate(-1)}>
@@ -82,16 +87,23 @@ export const GastronomiaDetalle = () => {
         <div className="row g-0">
           <div className="col-md-5">
             <img 
-              src={datos.restaurante.imagen_portada} 
+              src={datos.restaurante.imagen_url || datos.restaurante.imagen_portada || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80'} 
               alt={datos.restaurante.nombre}
               className="img-fluid w-100 h-100 object-fit-cover"
-              onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80'; }}
+              style={{ minHeight: '280px' }}
+              onError={(e) => { 
+                e.target.onerror = null; 
+                e.target.src = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80'; 
+              }}
             />
           </div>
           <div className="col-md-7 p-5">
-            <span className="badge bg-warning text-dark mb-2">{datos.restaurante.tipo_comida}</span>
+            <span className="badge bg-warning text-dark mb-2">{tipoComidaText}</span>
             <h1 className="fw-bold text-success">{datos.restaurante.nombre}</h1>
-            <p className="text-muted"><i className="bi bi-geo-alt-fill text-danger"></i> {datos.restaurante.municipio} - {datos.restaurante.direccion}</p>
+            <p className="text-muted">
+              <i className="bi bi-geo-alt-fill text-danger me-1"></i> 
+              {datos.restaurante.municipio} {datos.restaurante.direccion ? `- ${datos.restaurante.direccion}` : ''}
+            </p>
             <p className="fs-5 mt-3">{datos.restaurante.descripcion}</p>
             
             <button 
@@ -111,26 +123,33 @@ export const GastronomiaDetalle = () => {
         <div className="alert alert-light text-center py-4 border">Este restaurante aún no ha publicado sus platos.</div>
       ) : (
         <div className="row g-4">
-          {datos.menu.map(plato => (
-            <div className="col-md-6 col-lg-4" key={plato.id}>
-              <div className="card h-100 shadow-sm border-0 rounded-4">
-                <img 
-                  src={plato.foto_url} 
-                  className="card-img-top" 
-                  alt={plato.nombre_plato} 
-                  style={{ height: '220px', objectFit: 'cover' }}
-                  onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80'; }}
-                />
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h5 className="fw-bold mb-0 text-dark">{plato.nombre_plato}</h5>
-                    <span className="fs-5 fw-bold text-success">${Number(plato.precio).toLocaleString('es-CO')}</span>
+          {datos.menu.map(plato => {
+            const nombrePlato = plato.nombre || plato.nombre_plato;
+
+            return (
+              <div className="col-md-6 col-lg-4" key={plato.id}>
+                <div className="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                  <img 
+                    src={plato.imagen_url || plato.foto_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80'} 
+                    className="card-img-top" 
+                    alt={nombrePlato} 
+                    style={{ height: '220px', objectFit: 'cover' }}
+                    onError={(e) => { 
+                      e.target.onerror = null; 
+                      e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80'; 
+                    }}
+                  />
+                  <div className="card-body p-4">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <h5 className="fw-bold mb-0 text-dark">{nombrePlato}</h5>
+                      <span className="fs-5 fw-bold text-success">${Number(plato.precio).toLocaleString('es-CO')}</span>
+                    </div>
+                    <p className="text-muted small mb-0">{plato.descripcion}</p>
                   </div>
-                  <p className="text-muted small">{plato.descripcion}</p>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

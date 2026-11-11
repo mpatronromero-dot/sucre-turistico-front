@@ -13,6 +13,7 @@ import { AlojamientoDetalle } from './pages/public/AlojamientoDetalle';
 import { Login } from './pages/auth/Login';
 import { RutaProtegida } from './components/RutaProtegida';
 import { GastronomiaDetalle } from './pages/public/GastronomiaDetalle';
+import './index.css';
 
 function App() {
   return (

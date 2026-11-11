@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axiosConfig'; // Usamos el API Gateway
 
 export const GestionHabitaciones = () => {
     const [alojamientos, setAlojamientos] = useState([]);
@@ -12,18 +12,25 @@ export const GestionHabitaciones = () => {
     const [formData, setFormData] = useState({ nombre: '', precio: '', descripcion: '' });
     const [imagen, setImagen] = useState(null);
 
-    // 1. Cargar lista de hoteles al iniciar
+    // 1. Cargar SOLO los hoteles del usuario logueado
     useEffect(() => {
-        const cargarHoteles = async () => {
+        const cargarMisHoteles = async () => {
             try {
-                const res = await axios.get('http://localhost:3002/api/alojamientos');
+                const usuarioId = localStorage.getItem('usuario_id');
+                if (!usuarioId) {
+                    console.error("No se encontró el ID del usuario en sesión.");
+                    return;
+                }
+                
+                // Llamamos a la nueva ruta filtrada por usuario
+                const res = await api.get(`/alojamientos/mis-alojamientos/${usuarioId}`);
                 const listaHoteles = Array.isArray(res.data) ? res.data : (res.data.data || []);
                 setAlojamientos(listaHoteles);
             } catch (err) {
-                console.error("Error cargando hoteles", err);
+                console.error("Error cargando los hoteles del usuario", err);
             }
         };
-        cargarHoteles();
+        cargarMisHoteles();
     }, []);
 
     // 2. Cargar habitaciones cuando se selecciona un hotel
@@ -37,7 +44,7 @@ export const GestionHabitaciones = () => {
 
     const cargarHabitaciones = async (idAlojamiento) => {
         try {
-            const res = await axios.get(`http://localhost:3002/api/alojamientos/${idAlojamiento}/habitaciones`);
+            const res = await api.get(`/alojamientos/${idAlojamiento}/habitaciones`);
             setHabitaciones(Array.isArray(res.data) ? res.data : (res.data.data || []));
         } catch (error) {
             console.error("Error cargando habitaciones", error);
@@ -48,7 +55,7 @@ export const GestionHabitaciones = () => {
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleFileChange = (e) => setImagen(e.target.files[0]);
 
-    // 3. Preparar el formulario para Editar (Con validación de nulos)
+    // 3. Preparar el formulario para Editar
     const prepararEdicion = (hab) => {
         setModoEdicion(true);
         setHabitacionIdEdit(hab.id);
@@ -87,9 +94,9 @@ export const GestionHabitaciones = () => {
 
         try {
             if (modoEdicion) {
-                await axios.put(`http://localhost:3002/api/habitaciones/${habitacionIdEdit}`, data);
+                await api.put(`/habitaciones/${habitacionIdEdit}`, data);
             } else {
-                await axios.post('http://localhost:3002/api/habitaciones', data);
+                await api.post('/habitaciones', data);
             }
             cancelarEdicion();
             cargarHabitaciones(hotelSeleccionado); // Recargar la tabla
@@ -103,7 +110,7 @@ export const GestionHabitaciones = () => {
     const eliminarHabitacion = async (id) => {
         if(window.confirm("¿Seguro que deseas eliminar esta habitación del catálogo?")) {
             try {
-                await axios.delete(`http://localhost:3002/api/habitaciones/${id}`);
+                await api.delete(`/habitaciones/${id}`);
                 cargarHabitaciones(hotelSeleccionado);
             } catch (error) {
                 console.error("Error al eliminar", error);
@@ -113,7 +120,7 @@ export const GestionHabitaciones = () => {
 
     return (
         <div className="container-fluid p-0">
-            {/* Buscador del Hotel */}
+            {/* Buscador del Hotel (Filtrado para el usuario actual) */}
             <div className="card shadow-sm border-0 mb-4 bg-primary text-white">
                 <div className="card-body p-4">
                     <h5 className="fw-bold mb-3"><i className="bi bi-buildings"></i> Gestión de Catálogo de Habitaciones</h5>
@@ -123,6 +130,9 @@ export const GestionHabitaciones = () => {
                             <option key={h.id} value={h.id}>{h.nombre} ({h.municipio})</option>
                         ))}
                     </select>
+                    {alojamientos.length === 0 && (
+                        <small className="d-block mt-2 text-warning"><i className="bi bi-info-circle"></i> Aún no has registrado ningún alojamiento.</small>
+                    )}
                 </div>
             </div>
 

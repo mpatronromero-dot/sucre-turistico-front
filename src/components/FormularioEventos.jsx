@@ -82,7 +82,6 @@ export const FormularioEventos = () => {
                                 <option value="Tolú">Santiago de Tolú</option>
                                 <option value="Coveñas">Coveñas</option>
                                 <option value="San Onofre">San Onofre</option>
-                                <option value="Ovejas">Ovejas</option>
                             </select>
                         </div>
 

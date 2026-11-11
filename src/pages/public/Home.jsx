@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Agregamos useNavigate
 import api from '../../api/axiosConfig';
 
 // 1. Importación de todas tus imágenes locales desde assets
@@ -12,6 +12,9 @@ import fotoEventos from '../../assets/eventos.jpg';
 export const Home = () => {
   const [query, setQuery] = useState('');
   const [resultados, setResultados] = useState([]);
+  
+  // Inicializamos el hook de navegación
+  const navigate = useNavigate();
 
   // Búsqueda en tiempo real conectada al buscador-service
   const handleSearch = async (e) => {
@@ -27,6 +30,28 @@ export const Home = () => {
       }
     } else {
       setResultados([]);
+    }
+  };
+
+  // Función para redirigir al detalle cuando se hace clic en una sugerencia
+  const handleSeleccionarResultado = (item) => {
+    // Normalizamos el texto (a minúsculas) para que no haya problemas con las mayúsculas o tildes
+    const tipo = (item.tipo || '').toLowerCase();
+    const id = item.id || item._id; // Funciona si viene directo de MySQL o desde _id de Elasticsearch
+
+    if (!id) return; // Si por algún error no hay ID, evitamos la redirección
+
+    // Enrutamiento condicional basado en la categoría
+    if (tipo.includes('gastronom')) {
+      navigate(`/gastronomia/${id}`);
+    } else if (tipo.includes('alojamiento') || tipo.includes('hotel')) {
+      navigate(`/alojamientos/${id}`);
+    } else if (tipo.includes('experiencia')) {
+      navigate(`/experiencias/${id}`);
+    } else if (tipo.includes('evento') || tipo.includes('agenda')) {
+      navigate(`/eventos/${id}`);
+    } else {
+      console.warn('Categoría desconocida para redirección:', tipo);
     }
   };
 
@@ -136,7 +161,11 @@ export const Home = () => {
           {resultados.length > 0 && (
             <div className="list-group position-absolute w-100 shadow mt-1 z-3">
               {resultados.map((item, index) => (
-                <button key={index} className="list-group-item list-group-item-action text-start">
+                <button 
+                  key={index} 
+                  className="list-group-item list-group-item-action text-start"
+                  onClick={() => handleSeleccionarResultado(item)} // Conectado a la función de enrutamiento
+                >
                   <strong>{item.nombre}</strong> <span className="badge bg-secondary ms-2">{item.tipo}</span>
                 </button>
               ))}

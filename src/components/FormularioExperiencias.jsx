@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useRef } from 'react';
+import api from '../api/axiosConfig';
 
 export const FormularioExperiencias = () => {
-    // 1. Estado inicial sin el video
+    // 1. Estado inicial del formulario
     const [formData, setFormData] = useState({
         nombre: '', municipio: 'Tolú', tipo: 'Náutico', descripcion: '', 
         costo_estimado: '', tipo_tarifa: 'Por persona'
     });
     const [imagen, setImagen] = useState(null);
     const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
+
+    // Referencia para limpiar el input file visualmente
+    const inputFileRef = useRef(null);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,6 +23,7 @@ export const FormularioExperiencias = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setMensaje({ texto: '', tipo: '' });
         
         const data = new FormData();
         data.append('nombre', formData.nombre);
@@ -34,18 +38,23 @@ export const FormularioExperiencias = () => {
         }
 
         try {
-            await axios.post('http://localhost:3004/api/experiencias', data);
+            // Petición a través del API Gateway (puerto 3005)
+            await api.post('/experiencias', data);
             
-            setMensaje({ texto: '¡Experiencia registrada con éxito!', tipo: 'success' });
+            setMensaje({ texto: '¡Experiencia registrada con éxito en la base de datos!', tipo: 'success' });
             
             // Limpiamos todo al terminar
             setFormData({ nombre: '', municipio: 'Tolú', tipo: 'Náutico', descripcion: '', costo_estimado: '', tipo_tarifa: 'Por persona' });
             setImagen(null);
-            document.getElementById("archivo_imagen").value = ""; 
+            
+            // Limpieza visual del input de archivo con la referencia
+            if (inputFileRef.current) {
+                inputFileRef.current.value = "";
+            }
             
         } catch (error) {
-            console.error(error);
-            setMensaje({ texto: 'Error al registrar la experiencia.', tipo: 'danger' });
+            console.error("Error al registrar experiencia:", error);
+            setMensaje({ texto: 'Error al registrar la experiencia. Verifica la conexión o la consola del servidor.', tipo: 'danger' });
         }
     };
 
@@ -67,7 +76,7 @@ export const FormularioExperiencias = () => {
                         <div className="col-md-6">
                             <label className="form-label fw-bold">Municipio</label>
                             <select name="municipio" value={formData.municipio} onChange={handleChange} className="form-select">
-                                <option value="Coveñas">Coveñas</option><option value="Tolú">Tolú</option><option value="San Onofre">San Onofre</option>
+                                <option value="Coveñas">Coveñas</option><option value="Tolú">Tolú</option><option value="San Onofre">San Onofre</option><option value="San Antero">San Antero</option><option value="Toluviejo">Toluviejo</option>
                             </select>
                         </div>
                         <div className="col-md-6">
@@ -91,10 +100,16 @@ export const FormularioExperiencias = () => {
 
                         <div className="col-12 mt-4"><h6 className="fw-bold text-primary mb-3 border-bottom pb-2">Fotografía y Descripción</h6></div>
                         
-                        {/* La caja de la foto ahora ocupa todo el ancho visualmente */}
                         <div className="col-md-12">
                             <label className="form-label fw-bold text-danger"><i className="bi bi-file-earmark-image"></i> Subir Fotografía (.jpg, .png)</label>
-                            <input type="file" id="archivo_imagen" accept="image/*" onChange={handleFileChange} className="form-control" />
+                            <input 
+                                type="file" 
+                                id="archivo_imagen" 
+                                ref={inputFileRef}
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                                className="form-control" 
+                            />
                         </div>
                         
                         <div className="col-md-12 mt-3">

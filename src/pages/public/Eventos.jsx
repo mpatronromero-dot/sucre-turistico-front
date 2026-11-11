@@ -31,6 +31,20 @@ export const Eventos = () => {
     setExpandidoId(expandidoId === id ? null : id);
   };
 
+  // Función auxiliar para transformar fechas ISO a formato amigable (Ej: 7 de enero de 2027)
+  const formatearFecha = (fechaStr) => {
+    if (!fechaStr) return '';
+    const fecha = new Date(fechaStr);
+    if (isNaN(fecha.getTime())) return fechaStr; 
+    
+    return fecha.toLocaleDateString('es-CO', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC'
+    });
+  };
+
   const filtrados = eventos.filter(evento => {
     if (filtroMes === '') return true;
     if (!evento.fecha_inicio) return false;
@@ -100,7 +114,9 @@ export const Eventos = () => {
                     <div className="text-end d-flex align-items-center gap-3">
                       <div className="bg-light px-3 py-2 rounded border d-none d-md-block">
                         <span className="d-block text-muted small fw-bold">FECHA PROGRAMADA</span>
-                        <span className="fw-bold text-dark small">{evento.fecha_inicio} {evento.fecha_fin ? ` al ${evento.fecha_fin}` : ''}</span>
+                        <span className="fw-bold text-dark small">
+                          {formatearFecha(evento.fecha_inicio)} {evento.fecha_fin ? ` al ${formatearFecha(evento.fecha_fin)}` : ''}
+                        </span>
                       </div>
                       <i className={`bi bi-chevron-${estaAbierto ? 'up' : 'down'} fs-4 text-info fw-bold`}></i>
                     </div>

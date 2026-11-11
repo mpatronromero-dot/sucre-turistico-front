@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import axios from 'axios'; // Usamos axios puro para el login y evitar conflictos CORS
 
 export const Login = () => {
   const [esRegistro, setEsRegistro] = useState(false);
@@ -17,48 +18,47 @@ export const Login = () => {
     e.preventDefault();
     setCargando(true);
 
-    const url = esRegistro 
-      ? 'http://localhost:3005/api/auth/register' 
-      : 'http://localhost:3005/api/auth/login';
-
+    const endpoint = esRegistro ? 'http://localhost:3005/api/auth/register' : 'http://localhost:3005/api/auth/login';
     const body = esRegistro 
       ? { nombre_encargado: nombre, email, password }
       : { email, password };
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+      // Petición directa al Gateway con axios puro
+      const response = await axios.post(endpoint, body, {
+        headers: { 'Content-Type': 'application/json' }
       });
+      const result = response.data;
 
-      const result = await response.json();
-
-      if (response.ok) {
-        if (esRegistro) {
-          Swal.fire('¡Éxito!', result.message, 'success');
-          setEsRegistro(false); // Lo mandamos a la vista de login
-        } else {
-          // LOGIN EXITOSO: Guardamos el carnet (token) en la memoria del navegador
-          localStorage.setItem('token', result.token);
-          localStorage.setItem('usuario', JSON.stringify(result.usuario));
-          
-          Swal.fire({
-            title: '¡Bienvenido!',
-            text: result.message,
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
-          });
-          
-          navigate('/admin'); // Lo enviamos a su panel
-        }
+      if (esRegistro) {
+        Swal.fire('¡Éxito!', result.message, 'success');
+        setEsRegistro(false); 
+        setNombre('');
+        setPassword('');
       } else {
-        Swal.fire('Error', result.message, 'error');
+        // LOGIN EXITOSO: Guardamos datos de sesión
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('usuario', JSON.stringify(result.usuario));
+        localStorage.setItem('usuario_id', result.usuario.id); 
+        
+        Swal.fire({
+          title: '¡Bienvenido!',
+          text: result.message,
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        
+        navigate('/admin'); 
       }
     } catch (error) {
-      console.error("Error:", error);
-      Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+      console.error("Error completo:", error);
+      // Mejor manejo del mensaje de error
+      let mensajeError = 'No se pudo conectar con el servidor. Verifica que el API Gateway esté encendido.';
+      if (error.response && error.response.data && error.response.data.message) {
+          mensajeError = error.response.data.message;
+      }
+      Swal.fire('Error', mensajeError, 'error');
     } finally {
       setCargando(false);
     }
@@ -68,7 +68,6 @@ export const Login = () => {
     <div className="container-fluid d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
       <div className="card shadow-lg border-0 rounded-4" style={{ maxWidth: '400px', width: '100%' }}>
         
-        {/* Encabezado azul */}
         <div className="card-header bg-primary text-white text-center py-4 rounded-top-4 border-0">
           <h3 className="fw-bold mb-0">Sucre Turístico</h3>
           <p className="mb-0 small opacity-75">Portal para Socios y Hoteleros</p>
@@ -80,7 +79,6 @@ export const Login = () => {
           </h4>
 
           <form onSubmit={handleSubmit}>
-            {/* Campo Nombre (Solo aparece si es registro) */}
             {esRegistro && (
               <div className="mb-3">
                 <label className="form-label text-muted small fw-semibold">Nombre del Encargado</label>
@@ -105,26 +103,26 @@ export const Login = () => {
                 {!esRegistro && <a href="#" className="small text-decoration-none text-primary">¿Olvidaste tu contraseña?</a>}
               </div>
               <div className="input-group">
-  <span className="input-group-text bg-light border-end-0"><i className="bi bi-lock"></i></span>
-  
-  <input 
-    type={mostrarPassword ? "text" : "password"} 
-    className="form-control border-start-0 border-end-0 bg-light" 
-    placeholder="********" 
-    value={password} 
-    onChange={(e) => setPassword(e.target.value)} 
-    required 
-  />
-  
-  <span 
-    className="input-group-text bg-light text-muted fw-bold" 
-    onClick={() => setMostrarPassword(!mostrarPassword)} 
-    style={{ cursor: 'pointer', fontSize: '1.1rem' }}
-    title={mostrarPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-  >
-    {mostrarPassword ? "🙈" : "👁️"}
-  </span>
-</div>
+                <span className="input-group-text bg-light border-end-0"><i className="bi bi-lock"></i></span>
+                
+                <input 
+                  type={mostrarPassword ? "text" : "password"} 
+                  className="form-control border-start-0 border-end-0 bg-light" 
+                  placeholder="********" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                />
+                
+                <span 
+                  className="input-group-text bg-light text-muted fw-bold" 
+                  onClick={() => setMostrarPassword(!mostrarPassword)} 
+                  style={{ cursor: 'pointer', fontSize: '1.1rem' }}
+                  title={mostrarPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {mostrarPassword ? "🙈" : "👁️"}
+                </span>
+              </div>
             </div>
 
             <button type="submit" className="btn btn-primary w-100 fw-bold rounded-pill py-2 shadow-sm" disabled={cargando}>
@@ -132,7 +130,6 @@ export const Login = () => {
             </button>
           </form>
 
-          {/* Botón para alternar entre Login y Registro */}
           <div className="text-center mt-4 pt-3 border-top">
             <span className="text-muted small">
               {esRegistro ? '¿Ya tienes cuenta?' : '¿Quieres publicar tu hotel?'}

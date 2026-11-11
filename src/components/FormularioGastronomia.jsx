@@ -1,23 +1,21 @@
 import React, { useState, useRef } from 'react';
-import axios from 'axios';
+import api from '../api/axiosConfig'; // Usa la instancia centralizada del API Gateway (puerto 3005)
 
 export const FormularioGastronomia = () => {
     // 1. Estado del Restaurante
     const [formData, setFormData] = useState({
-        nombre: '', municipio: '', tipo_comida: '', direccion: '', descripcion: ''
+        nombre: '', municipio: '', tipo: '', direccion: '', descripcion: ''
     });
     const [imagen, setImagen] = useState(null);
 
-    // 2. Estado Dinámico de Platos (Inicia con un formulario de plato vacío)
+    // 2. Estado Dinámico de Platos
     const [platos, setPlatos] = useState([
-        { nombre: '', precio: '', ingredientes: '', foto: null }
+        { nombre: '', precio: '', descripcion: '', foto: null }
     ]);
 
     const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
 
-    // Referencia para limpiar el input de archivo del restaurante de forma limpia en React
     const inputRestauranteRef = useRef(null);
-    // Referencias para limpiar los inputs de archivo de los platos dinámicos
     const platosFileRefs = useRef([]);
 
     // Manejadores del Restaurante
@@ -38,7 +36,7 @@ export const FormularioGastronomia = () => {
     };
 
     const agregarOtroPlato = () => {
-        setPlatos([...platos, { nombre: '', precio: '', ingredientes: '', foto: null }]);
+        setPlatos([...platos, { nombre: '', precio: '', descripcion: '', foto: null }]);
     };
 
     const eliminarPlato = (index) => {
@@ -48,58 +46,51 @@ export const FormularioGastronomia = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setMensaje({ texto: '', tipo: '' });
         
         try {
-            // PASO 1: Guardar el Restaurante
+            // PASO 1: Guardar el Restaurante con las columnas exactas de MySQL
             const dataRestaurante = new FormData();
             dataRestaurante.append('nombre', formData.nombre);
             dataRestaurante.append('municipio', formData.municipio);
-            dataRestaurante.append('tipo_comida', formData.tipo_comida);
+            dataRestaurante.append('tipo', formData.tipo); // Coincide con la columna 'tipo'
             dataRestaurante.append('direccion', formData.direccion);
             dataRestaurante.append('descripcion', formData.descripcion);
-            if (imagen) dataRestaurante.append('imagen', imagen);
+            if (imagen) dataRestaurante.append('imagen_url', imagen); // Coincide con 'imagen_url'
 
-            const resRestaurante = await axios.post('http://localhost:3003/api/gastronomia', dataRestaurante);
+            // Petición enviada a través del API Gateway (/api/gastronomia)
+            const resRestaurante = await api.post('/gastronomia', dataRestaurante);
             
-            // Extraer el ID generado por MySQL
             const restauranteId = resRestaurante.data.id || resRestaurante.data.insertId;
 
             // PASO 2: Guardar los Platos asociados
             if (restauranteId) {
                 for (const plato of platos) {
-                    // Evita enviar platos en blanco si el usuario agregó uno extra y se arrepintió
                     if (plato.nombre.trim() !== '') {
                         const dataPlato = new FormData();
-                        dataPlato.append('restaurante_id', restauranteId); // ID relacional automático
+                        dataPlato.append('restaurante_id', restauranteId); 
                         dataPlato.append('nombre', plato.nombre);
                         dataPlato.append('precio', plato.precio);
-                        dataPlato.append('ingredientes', plato.ingredientes);
-                        if (plato.foto) dataPlato.append('imagen', plato.foto); 
+                        dataPlato.append('descripcion', plato.descripcion); // Coincide con 'descripcion'
+                        if (plato.foto) dataPlato.append('imagen_url', plato.foto); // Coincide con 'imagen_url'
 
-                        // Endpoint de platos
-                        await axios.post('http://localhost:3003/api/platos', dataPlato);
+                        await api.post('/gastronomia/platos', dataPlato);
                     }
                 }
             }
             
-            // Éxito y limpieza completa de estados y archivos visuales
-            setMensaje({ texto: '¡Restaurante y menú registrados con éxito!', tipo: 'success' });
-            setFormData({ nombre: '', municipio: '', tipo_comida: '', direccion: '', descripcion: '' });
+            // Limpieza
+            setMensaje({ texto: '¡Restaurante y menú registrados exitosamente en la base de datos!', tipo: 'success' });
+            setFormData({ nombre: '', municipio: '', tipo: '', direccion: '', descripcion: '' });
             setImagen(null);
-            setPlatos([{ nombre: '', precio: '', ingredientes: '', foto: null }]);
+            setPlatos([{ nombre: '', precio: '', descripcion: '', foto: null }]);
             
-            // Limpiar input file del restaurante visualmente
-            if (inputRestauranteRef.current) {
-                inputRestauranteRef.current.value = "";
-            }
-            // Limpiar inputs files de los platos visualmente
-            platosFileRefs.current.forEach(ref => {
-                if (ref) ref.value = "";
-            });
+            if (inputRestauranteRef.current) inputRestauranteRef.current.value = "";
+            platosFileRefs.current.forEach(ref => { if (ref) ref.value = ""; });
             
         } catch (error) {
-            console.error(error);
-            setMensaje({ texto: 'Error al registrar los datos. Verifica la conexión.', tipo: 'danger' });
+            console.error('Error al registrar:', error);
+            setMensaje({ texto: 'Error al registrar los datos. Revisa la consola o asegúrate de que MySQL y los microservicios estén encendidos.', tipo: 'danger' });
         }
     };
 
@@ -115,7 +106,7 @@ export const FormularioGastronomia = () => {
                     {/* SECCIÓN 1: DATOS DEL RESTAURANTE */}
                     <div className="row g-4">
                         <div className="col-md-12 mb-2 border-bottom pb-2">
-                            <h5 className="text-secondary fw-bold">Datos del Establecimiento</h5>
+                            <h5 className="text-secondary fw-bold">1. Datos del Establecimiento</h5>
                         </div>
 
                         <div className="col-md-6">
@@ -135,7 +126,7 @@ export const FormularioGastronomia = () => {
                         </div>
                         <div className="col-md-6">
                             <label className="form-label fw-bold">Tipo de Comida</label>
-                            <select className="form-select" name="tipo_comida" value={formData.tipo_comida} onChange={handleChange} required>
+                            <select className="form-select" name="tipo" value={formData.tipo} onChange={handleChange} required>
                                 <option value="">Seleccione una opción...</option>
                                 <option value="Almuerzo / Corriente">Almuerzo / Corriente</option>
                                 <option value="Mariscos y Pescados">Mariscos y Pescados</option>
@@ -177,7 +168,6 @@ export const FormularioGastronomia = () => {
                         {platos.map((plato, index) => (
                             <div key={index} className="col-12">
                                 <div className="card bg-light border-success bg-opacity-10 p-3 position-relative">
-                                    {/* Botón para eliminar plato si hay más de uno */}
                                     {platos.length > 1 && (
                                         <button 
                                             type="button" 
@@ -212,11 +202,11 @@ export const FormularioGastronomia = () => {
                                             />
                                         </div>
                                         <div className="col-md-12">
-                                            <label className="form-label">Ingredientes / Descripción</label>
+                                            <label className="form-label">Descripción del Plato</label>
                                             <textarea 
                                                 className="form-control" 
-                                                value={plato.ingredientes}
-                                                onChange={(e) => handlePlatoChange(index, 'ingredientes', e.target.value)}
+                                                value={plato.descripcion}
+                                                onChange={(e) => handlePlatoChange(index, 'descripcion', e.target.value)}
                                                 rows="2"
                                                 placeholder="Queso costeño, ñame, suero..."
                                             ></textarea>

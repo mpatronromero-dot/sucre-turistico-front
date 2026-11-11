@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import api from '../../api/axiosConfig'; // Usamos el API Gateway centralizado
 
 export const Experiencias = () => {
   const [experiencias, setExperiencias] = useState([]);
@@ -18,12 +19,12 @@ export const Experiencias = () => {
     cantidad_personas: 1
   });
 
-  // 1. Cargar las experiencias desde el backend
+  // 1. Cargar las experiencias desde el API Gateway
   useEffect(() => {
     const cargar = async () => {
       try {
-        const response = await fetch('http://localhost:3004/api/experiencias');
-        const data = await response.json();
+        const response = await api.get('/experiencias');
+        const data = response.data;
         const datosReales = Array.isArray(data) ? data : (data.data || []);
         setExperiencias(datosReales);
       } catch (error) {
@@ -49,7 +50,6 @@ export const Experiencias = () => {
 
   const handleSubmitReserva = (e) => {
     e.preventDefault();
-    // Simulación rápida de reserva confirmada
     alert(`¡Reserva solicitada con éxito para: ${experienciaSeleccionada.nombre}!\n\nEl operador se contactará al número ${formDataReserva.telefono} para confirmar el pago y la hora exacta.`);
     handleCerrarModal();
   };
@@ -59,6 +59,16 @@ export const Experiencias = () => {
     (filtroMunicipio === '' || e.municipio === filtroMunicipio) &&
     (filtroTipo === '' || e.tipo === filtroTipo)
   );
+
+  // Auxiliar para asegurar que la URL de la imagen apunte correctamente al microservicio o URL absoluta
+  const obtenerImagenUrl = (url) => {
+    if (!url) return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80';
+    if (url.startsWith('http')) {
+      // Opcional: si la imagen trae el puerto 3004 directo, puedes dejarla o adaptarla al Gateway si deseas
+      return url;
+    }
+    return `http://localhost:3004${url}`;
+  };
 
   if (cargando) return <div className="container py-5 text-center"><h5>Cargando catálogo...</h5></div>;
 
@@ -128,7 +138,6 @@ export const Experiencias = () => {
                       <span className="d-block text-muted small fw-bold text-uppercase">{lugar.tipo_tarifa || 'Tarifa Estándar'}</span>
                       <span className="fs-3 fw-bold text-dark">$ {new Intl.NumberFormat('es-CO').format(lugar.costo_estimado)}</span>
                       
-                      {/* --- NUEVO BOTÓN CON EVENTO ONCLICK --- */}
                       <button 
                         className="btn btn-info fw-bold d-block w-100 mt-3 text-white shadow-sm"
                         onClick={() => handleAbrirReserva(lugar)}
@@ -141,12 +150,10 @@ export const Experiencias = () => {
 
                   <div className="mt-4">
                     <img 
-                      // Si lugar.imagen_url está vacío, usa la foto del mar por defecto
-                      src={lugar.imagen_url || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80'} 
+                      src={obtenerImagenUrl(lugar.imagen_url)} 
                       alt={lugar.nombre} 
                       className="img-fluid rounded w-100 object-fit-cover shadow-sm" 
                       style={{ maxHeight: '350px' }} 
-                      // Si el negocio pegó un link roto, también mostramos la de respaldo
                       onError={(e) => { 
                         e.target.onerror = null; 
                         e.target.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80'; 
@@ -207,7 +214,6 @@ export const Experiencias = () => {
                                onChange={e => setFormDataReserva({...formDataReserva, cantidad_personas: e.target.value})} />
                       </div>
                     </div>
-                    
                     
                     <div className="d-grid mt-2">
                       <button type="submit" className="btn btn-warning fw-bold fs-5 shadow-sm text-dark">

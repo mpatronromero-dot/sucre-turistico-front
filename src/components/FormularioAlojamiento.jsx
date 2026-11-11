@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api/axiosConfig'; // Usamos el API Gateway
 
 export const FormularioAlojamiento = () => {
     const [formData, setFormData] = useState({
@@ -21,11 +21,20 @@ export const FormularioAlojamiento = () => {
         data.append('descripcion', formData.descripcion);
         if (imagen) data.append('imagen', imagen);
 
+        // NUEVO: Adjuntamos el ID del usuario creador (Multi-Tenancy)
+        const usuarioId = localStorage.getItem('usuario_id');
+        if (usuarioId) {
+            data.append('usuario_id', usuarioId);
+        } else {
+            setMensaje({ texto: 'Error: No hay sesión activa de usuario.', tipo: 'danger' });
+            return;
+        }
+
         try {
-            // El microservicio de alojamientos suele correr en el puerto 3002
-            await axios.post('http://localhost:3002/api/alojamientos', data);
+            // Petición a través del API Gateway
+            await api.post('/alojamientos', data);
             
-            setMensaje({ texto: '¡Alojamiento registrado con éxito!', tipo: 'success' });
+            setMensaje({ texto: '¡Alojamiento registrado con éxito y asignado a tu cuenta!', tipo: 'success' });
             setFormData({ nombre: '', municipio: '', tipo: '', descripcion: '' });
             setImagen(null);
             document.getElementById("imagen_alojamiento").value = ""; 
