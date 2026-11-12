@@ -14,17 +14,19 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
+    // ¡MEDIDA RADICAL! Reemplazamos bg-primary por bg-caribe-sobrio
+    <nav className="navbar navbar-expand-lg navbar-dark bg-caribe-sobrio sticky-top shadow-sm py-3">
       <div className="container">
         {/* Logo y Nombre a la izquierda */}
         <Link className="navbar-brand d-flex align-items-center" to="/">
-          <i className="bi bi-water me-2 fs-4"></i>
-          <span className="fw-bold">Sucre Turístico</span>
+          <i className="bi bi-water me-2 fs-3"></i>
+          {/* Tipografía serif para el logo, dándole ese toque elegante */}
+          <span className="fw-bold fs-4" style={{ fontFamily: 'serif', letterSpacing: '1px' }}>Sucre Turístico</span>
         </Link>
 
-        {/* Botón hamburguesa para móviles */}
+        {/* Botón hamburguesa para móviles (sin bordes rústicos) */}
         <button 
-          className="navbar-toggler" 
+          className="navbar-toggler border-0 shadow-none" 
           type="button" 
           data-bs-toggle="collapse" 
           data-bs-target="#navbarNav"
@@ -36,31 +38,30 @@ export const Navbar = () => {
         <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
           <ul className="navbar-nav align-items-center">
             {isAuthenticated ? (
-              // Fragmento <> </> para agrupar los dos botones cuando SÍ hay sesión
               <>
-                <li className="nav-item mb-2 mb-lg-0">
+                <li className="nav-item mb-2 mb-lg-0 mt-3 mt-lg-0">
                   <Link 
                     to="/admin" 
-                    className="btn btn-light text-primary ms-lg-3 fw-bold shadow-sm"
+                    // Reemplazamos text-primary por text-caribe-sobrio y añadimos rounded-pill
+                    className="btn btn-light text-caribe-sobrio ms-lg-3 fw-bold shadow-sm rounded-pill px-4"
                   >
                     <i className="bi bi-speedometer2 me-2"></i>Panel Admin
                   </Link>
                 </li>
-                <li className="nav-item">
+                <li className="nav-item mt-2 mt-lg-0">
                   <button 
                     onClick={handleLogout} 
-                    className="btn btn-outline-light ms-lg-3 fw-semibold"
+                    className="btn btn-outline-light ms-lg-3 fw-semibold rounded-pill px-4"
                   >
                     Cerrar Sesión
                   </button>
                 </li>
               </>
             ) : (
-              // Cuando NO hay sesión, solo muestra Iniciar Sesión
-              <li className="nav-item">
+              <li className="nav-item mt-3 mt-lg-0">
                 <Link 
                   to="/login" 
-                  className="btn btn-outline-light ms-lg-3 fw-semibold"
+                  className="btn btn-outline-light ms-lg-3 fw-semibold rounded-pill px-4"
                 >
                   Iniciar Sesión
                 </Link>

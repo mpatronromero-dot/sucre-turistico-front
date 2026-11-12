@@ -1,60 +1,34 @@
-:root {
-  --text: #4a5568;
-  --text-h: #1a2e3b;
-  --bg: #fcfbf9;
-  --border: #e2e8f0;
-  --accent: #0f766e;
-  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font: 16px/145% var(--sans);
-  color: var(--text);
-  background-color: var(--bg);
+/* --- CLASES PERSONALIZADAS SUCRE TURÍSTICO --- */
+
+/* Esta clase reemplaza al bg-primary de Bootstrap */
+.bg-caribe-sobrio {
+  background-color: #0f766e !important; /* Azul Petróleo */
+  color: #ffffff !important;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #fcfbf9 !important;
-  color: #4a5568 !important;
-  font-family: var(--sans);
-}
-
-/* Hacemos que la app ocupe todo el ancho de forma moderna */
-#root {
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: left !important;
-  border: none !important;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-/* Estilos limpios para tipografías */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--text-h);
-  font-weight: 600;
-}
-
-/* Personalización sobria y elegante para botones y tarjetas */
-.btn-primary {
+/* Esta clase reemplaza al btn-primary de Bootstrap */
+.btn-caribe-sobrio {
   background-color: #0f766e !important;
   border-color: #0f766e !important;
+  color: #ffffff !important;
   border-radius: 50rem !important;
   padding: 0.5rem 1.5rem;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
 }
 
-.btn-primary:hover {
+.btn-caribe-sobrio:hover {
   background-color: #115e59 !important;
   border-color: #115e59 !important;
+  color: #ffffff !important;
 }
 
-.card {
-  border: 1px solid #eae6df !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+/* Para textos que antes usaban text-primary */
+.text-caribe-sobrio {
+  color: #0f766e !important;
+}
+
+/* Forzar fondo claro */
+.bg-fondo-claro {
+    background-color: #fcfbf9 !important;
 }

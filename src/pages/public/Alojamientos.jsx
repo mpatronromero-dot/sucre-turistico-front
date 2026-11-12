@@ -66,7 +66,7 @@ export const Alojamientos = () => {
               >
                 <option value="">Todos los municipios</option>
                 <option value="Coveñas">Coveñas</option>
-                <option value="Santiago de Tolú">Santiago de Tolú</option>
+                <option value="Tolú">Tolú</option>
                 <option value="San Onofre">San Onofre</option>
                 <option value="Sincelejo">Sincelejo</option>
               </select>

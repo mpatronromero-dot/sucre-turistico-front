@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api/axiosConfig'; // Usamos el API Gateway
+import api from '../api/axiosConfig'; 
 
 export const GestionHabitaciones = () => {
     const [alojamientos, setAlojamientos] = useState([]);
@@ -17,12 +17,8 @@ export const GestionHabitaciones = () => {
         const cargarMisHoteles = async () => {
             try {
                 const usuarioId = localStorage.getItem('usuario_id');
-                if (!usuarioId) {
-                    console.error("No se encontró el ID del usuario en sesión.");
-                    return;
-                }
+                if (!usuarioId) return;
                 
-                // Llamamos a la nueva ruta filtrada por usuario
                 const res = await api.get(`/alojamientos/mis-alojamientos/${usuarioId}`);
                 const listaHoteles = Array.isArray(res.data) ? res.data : (res.data.data || []);
                 setAlojamientos(listaHoteles);
@@ -67,7 +63,6 @@ export const GestionHabitaciones = () => {
         setImagen(null);
         const inputImg = document.getElementById("imagen_hab");
         if (inputImg) inputImg.value = ""; 
-        window.scrollTo(0, 0); 
     };
 
     // 4. Cancelar Edición
@@ -99,7 +94,7 @@ export const GestionHabitaciones = () => {
                 await api.post('/habitaciones', data);
             }
             cancelarEdicion();
-            cargarHabitaciones(hotelSeleccionado); // Recargar la tabla
+            cargarHabitaciones(hotelSeleccionado);
         } catch (error) {
             console.error("Error al guardar", error);
             alert("Error al guardar la habitación.");
@@ -119,116 +114,148 @@ export const GestionHabitaciones = () => {
     };
 
     return (
-        <div className="container-fluid p-0">
-            {/* Buscador del Hotel (Filtrado para el usuario actual) */}
-            <div className="card shadow-sm border-0 mb-4 bg-primary text-white">
-                <div className="card-body p-4">
-                    <h5 className="fw-bold mb-3"><i className="bi bi-buildings"></i> Gestión de Catálogo de Habitaciones</h5>
-                    <select className="form-select form-select-lg" value={hotelSeleccionado} onChange={(e) => setHotelSeleccionado(e.target.value)}>
-                        <option value="">-- Selecciona el Alojamiento a gestionar --</option>
-                        {alojamientos.map(h => (
-                            <option key={h.id} value={h.id}>{h.nombre} ({h.municipio})</option>
-                        ))}
-                    </select>
-                    {alojamientos.length === 0 && (
-                        <small className="d-block mt-2 text-warning"><i className="bi bi-info-circle"></i> Aún no has registrado ningún alojamiento.</small>
-                    )}
-                </div>
+        <div className="card shadow-sm border-0 mb-4 rounded-4 bg-white overflow-hidden mt-2">
+            
+            {/* Encabezado elegante unificado */}
+            <div className="card-header bg-white border-bottom border-light py-4 px-4">
+                <h4 className="fw-bold mb-0 text-caribe-sobrio">
+                    <i className="bi bi-door-open me-2"></i> Gestión de Habitaciones (Paso 2)
+                </h4>
+                <p className="text-muted small mb-0 mt-1">Selecciona tu alojamiento para agregar o editar las habitaciones disponibles.</p>
             </div>
 
-            {hotelSeleccionado && (
-                <div className="row g-4">
-                    {/* FORMULARIO DE AGREGAR / EDITAR */}
-                    <div className="col-lg-4">
-                        <div className={`card shadow-sm border-0 border-top border-4 ${modoEdicion ? 'border-warning' : 'border-success'}`}>
-                            <div className="card-body p-4">
-                                <h5 className={`fw-bold ${modoEdicion ? 'text-warning' : 'text-success'} mb-4`}>
-                                    {modoEdicion ? '✏️ Editar Habitación' : '➕ Nueva Habitación'}
-                                </h5>
-                                <form onSubmit={handleSubmit}>
-                                    <div className="mb-3">
-                                        <label className="fw-bold small">Nombre de Habitación</label>
-                                        <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="form-control" placeholder="Ej. Suite Presidencial" required />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="fw-bold small">Precio por Noche (COP)</label>
-                                        <input type="number" name="precio" value={formData.precio} onChange={handleChange} className="form-control" required />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="fw-bold small">Características / Camas</label>
-                                        <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-control" rows="2" required></textarea>
-                                    </div>
-                                    <div className="mb-4">
-                                        <label className="fw-bold small text-primary">Foto de la Habitación</label>
-                                        <input type="file" id="imagen_hab" accept="image/*" onChange={handleFileChange} className="form-control form-control-sm" />
-                                        {modoEdicion && <small className="text-muted d-block mt-1">Si no seleccionas nada, se conservará la foto anterior.</small>}
-                                    </div>
-                                    
-                                    <button type="submit" className={`btn w-100 fw-bold ${modoEdicion ? 'btn-warning' : 'btn-success'}`}>
-                                        {modoEdicion ? 'Actualizar Habitación' : 'Guardar Habitación'}
-                                    </button>
-                                    {modoEdicion && (
-                                        <button type="button" onClick={cancelarEdicion} className="btn btn-light w-100 mt-2 border">Cancelar</button>
-                                    )}
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+            <div className="card-body p-4 p-md-5">
+                
+                {/* Buscador del Hotel Integrado */}
+                <div className="mb-5 p-4 bg-light rounded-4 border border-light">
+                    <label className="form-label fw-bold text-dark mb-2 d-block fs-5">
+                        Mis Alojamientos Registrados
+                    </label>
+                    <p className="text-muted small mb-4">Haz clic en uno de tus alojamientos a continuación para agregarle o editar sus habitaciones.</p>
 
-                    {/* TABLA DEL CATÁLOGO ACTUAL */}
-                    <div className="col-lg-8">
-                        <div className="card shadow-sm border-0">
-                            <div className="card-body p-4">
-                                <h5 className="fw-bold text-dark mb-4">Catálogo Actualizado</h5>
-                                {habitaciones.length === 0 ? (
-                                    <div className="alert alert-light text-center border p-4 text-muted">No hay habitaciones registradas para este hotel.</div>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-hover align-middle">
-                                            <thead className="table-light">
-                                                <tr>
-                                                    <th>Foto</th>
-                                                    <th>Habitación</th>
-                                                    <th>Precio</th>
-                                                    <th className="text-end">Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {habitaciones.map(hab => (
-                                                    <tr key={hab.id}>
-                                                        <td>
-                                                            {hab.imagen_url ? (
-                                                                <img src={hab.imagen_url} alt="hab" className="rounded object-fit-cover shadow-sm" style={{ width: '60px', height: '60px' }} />
-                                                            ) : (
-                                                                <div className="bg-light rounded text-center pt-3 text-muted" style={{ width: '60px', height: '60px' }}><i className="bi bi-camera"></i></div>
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            <div className="fw-bold">{hab.nombre || 'Sin nombre'}</div>
-                                                            <small className="text-muted">
-                                                                {hab.descripcion ? `${hab.descripcion.substring(0, 40)}...` : 'Sin descripción'}
-                                                            </small>
-                                                        </td>
-                                                        <td className="fw-semibold text-success">${hab.precio || 0}</td>
-                                                        <td className="text-end">
-                                                            <button onClick={() => prepararEdicion(hab)} className="btn btn-sm btn-outline-warning me-2" title="Editar">
-                                                                <i className="bi bi-pencil-fill"></i>
-                                                            </button>
-                                                            <button onClick={() => eliminarHabitacion(hab.id)} className="btn btn-sm btn-outline-danger" title="Eliminar">
-                                                                <i className="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                    {alojamientos.length === 0 ? (
+                        <div className="alert border-0 shadow-sm fw-semibold" style={{ backgroundColor: '#fdf6b2', color: '#723b13' }}>
+                            <i className="bi bi-info-circle me-2"></i> Aún no tienes alojamientos. ¡Registra el primero en el formulario de arriba!
+                        </div>
+                    ) : (
+                        <div className="d-flex flex-wrap gap-3">
+                            {alojamientos.map(h => (
+                                <button
+                                    key={h.id}
+                                    type="button"
+                                    onClick={() => setHotelSeleccionado(h.id.toString())}
+                                    className={`btn rounded-pill px-4 py-2 fw-semibold shadow-sm border ${
+                                        hotelSeleccionado === h.id.toString()
+                                        ? 'btn-caribe-sobrio border-0' 
+                                        : 'btn-white bg-white text-secondary'
+                                    }`}
+                                    style={{ 
+                                        transition: 'all 0.2s ease',
+                                        transform: hotelSeleccionado === h.id.toString() ? 'scale(1.03)' : 'none'
+                                    }}
+                                >
+                                    <i className={`bi ${hotelSeleccionado === h.id.toString() ? 'bi-check2-circle' : 'bi-building'} me-2`}></i>
+                                    {h.nombre}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {hotelSeleccionado && (
+                    <div className="row g-5">
+                        
+                        {/* FORMULARIO DE AGREGAR / EDITAR */}
+                        <div className="col-lg-4">
+                            <h5 className={`fw-bold mb-4 ${modoEdicion ? 'text-warning' : 'text-caribe-sobrio'}`}>
+                                {modoEdicion ? <><i className="bi bi-pencil-square me-2"></i>Editar Habitación</> : <><i className="bi bi-plus-circle me-2"></i>Nueva Habitación</>}
+                            </h5>
+                            
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-3">
+                                    <label className="form-label fw-semibold text-secondary small text-uppercase">Nombre de Habitación</label>
+                                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="form-control bg-light border-0" placeholder="Ej. Suite Presidencial" required />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label fw-semibold text-secondary small text-uppercase">Precio por Noche (COP)</label>
+                                    <input type="number" name="precio" value={formData.precio} onChange={handleChange} className="form-control bg-light border-0" placeholder="Ej. 150000" required />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label fw-semibold text-secondary small text-uppercase">Características / Camas</label>
+                                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-control bg-light border-0" rows="3" placeholder="Ej. 1 Cama doble, vista al mar, aire acondicionado..." required></textarea>
+                                </div>
+                                <div className="mb-4">
+                                    <label className="form-label fw-semibold text-caribe-sobrio small text-uppercase"><i className="bi bi-camera me-1"></i> Foto de la Habitación</label>
+                                    <input type="file" id="imagen_hab" accept="image/*" onChange={handleFileChange} className="form-control form-control-sm bg-light border-0" />
+                                    {modoEdicion && <small className="text-muted d-block mt-2 fst-italic">Si no seleccionas nada, se conservará la foto anterior.</small>}
+                                </div>
+                                
+                                <button type="submit" className={`btn w-100 fw-bold shadow-sm py-2 ${modoEdicion ? 'btn-warning text-dark' : 'btn-caribe-sobrio'}`}>
+                                    {modoEdicion ? 'Actualizar Habitación' : 'Guardar Habitación'}
+                                </button>
+                                {modoEdicion && (
+                                    <button type="button" onClick={cancelarEdicion} className="btn btn-light w-100 mt-2 fw-semibold text-muted">Cancelar Edición</button>
                                 )}
-                            </div>
+                            </form>
+                        </div>
+
+                        {/* TABLA DEL CATÁLOGO ACTUAL */}
+                        <div className="col-lg-8">
+                            <h5 className="fw-bold text-dark mb-4 border-bottom pb-2">Catálogo Actualizado</h5>
+                            
+                            {habitaciones.length === 0 ? (
+                                <div className="alert alert-light text-center border-dashed rounded-4 p-5 text-muted">
+                                    <i className="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                                    Aún no hay habitaciones registradas en este alojamiento.
+                                </div>
+                            ) : (
+                                <div className="table-responsive">
+                                    <table className="table table-hover align-middle">
+                                        <thead className="bg-light text-muted" style={{ fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                                            <tr>
+                                                <th className="border-0 rounded-start">Foto</th>
+                                                <th className="border-0">Habitación</th>
+                                                <th className="border-0">Precio</th>
+                                                <th className="border-0 rounded-end text-end">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {habitaciones.map(hab => (
+                                                <tr key={hab.id}>
+                                                    <td className="py-3">
+                                                        {hab.imagen_url ? (
+                                                            <img src={hab.imagen_url} alt="hab" className="rounded object-fit-cover shadow-sm" style={{ width: '65px', height: '65px' }} />
+                                                        ) : (
+                                                            <div className="bg-light rounded text-center pt-3 text-muted" style={{ width: '65px', height: '65px' }}>
+                                                                <i className="bi bi-camera fs-4"></i>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        <div className="fw-bold text-dark">{hab.nombre || 'Sin nombre'}</div>
+                                                        <small className="text-muted">
+                                                            {hab.descripcion ? `${hab.descripcion.substring(0, 45)}...` : 'Sin descripción'}
+                                                        </small>
+                                                    </td>
+                                                    <td className="py-3 fw-bold text-caribe-sobrio">${hab.precio || 0}</td>
+                                                    <td className="py-3 text-end">
+                                                        <button onClick={() => prepararEdicion(hab)} className="btn btn-sm btn-light text-primary border me-2" title="Editar">
+                                                            <i className="bi bi-pencil-fill"></i>
+                                                        </button>
+                                                        <button onClick={() => eliminarHabitacion(hab.id)} className="btn btn-sm btn-light text-danger border" title="Eliminar">
+                                                            <i className="bi bi-trash-fill"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
