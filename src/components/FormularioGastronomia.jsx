@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import api from '../api/axiosConfig'; // Usa la instancia centralizada del API Gateway (puerto 3005)
+import api from '../api/axiosConfig';
 
 export const FormularioGastronomia = () => {
     // 1. Estado del Restaurante
@@ -49,21 +49,17 @@ export const FormularioGastronomia = () => {
         setMensaje({ texto: '', tipo: '' });
         
         try {
-            // PASO 1: Guardar el Restaurante con las columnas exactas de MySQL
             const dataRestaurante = new FormData();
             dataRestaurante.append('nombre', formData.nombre);
             dataRestaurante.append('municipio', formData.municipio);
-            dataRestaurante.append('tipo', formData.tipo); // Coincide con la columna 'tipo'
+            dataRestaurante.append('tipo', formData.tipo);
             dataRestaurante.append('direccion', formData.direccion);
             dataRestaurante.append('descripcion', formData.descripcion);
-            if (imagen) dataRestaurante.append('imagen_url', imagen); // Coincide con 'imagen_url'
+            if (imagen) dataRestaurante.append('imagen_url', imagen);
 
-            // Petición enviada a través del API Gateway (/api/gastronomia)
             const resRestaurante = await api.post('/gastronomia', dataRestaurante);
-            
             const restauranteId = resRestaurante.data.id || resRestaurante.data.insertId;
 
-            // PASO 2: Guardar los Platos asociados
             if (restauranteId) {
                 for (const plato of platos) {
                     if (plato.nombre.trim() !== '') {
@@ -71,15 +67,14 @@ export const FormularioGastronomia = () => {
                         dataPlato.append('restaurante_id', restauranteId); 
                         dataPlato.append('nombre', plato.nombre);
                         dataPlato.append('precio', plato.precio);
-                        dataPlato.append('descripcion', plato.descripcion); // Coincide con 'descripcion'
-                        if (plato.foto) dataPlato.append('imagen_url', plato.foto); // Coincide con 'imagen_url'
+                        dataPlato.append('descripcion', plato.descripcion); 
+                        if (plato.foto) dataPlato.append('imagen_url', plato.foto);
 
                         await api.post('/gastronomia/platos', dataPlato);
                     }
                 }
             }
             
-            // Limpieza
             setMensaje({ texto: '¡Restaurante y menú registrados exitosamente en la base de datos!', tipo: 'success' });
             setFormData({ nombre: '', municipio: '', tipo: '', direccion: '', descripcion: '' });
             setImagen(null);
@@ -90,32 +85,45 @@ export const FormularioGastronomia = () => {
             
         } catch (error) {
             console.error('Error al registrar:', error);
-            setMensaje({ texto: 'Error al registrar los datos. Revisa la consola o asegúrate de que MySQL y los microservicios estén encendidos.', tipo: 'danger' });
+            setMensaje({ texto: 'Error al registrar los datos. Revisa la conexión o consola.', tipo: 'danger' });
         }
     };
 
     return (
-        <div className="card shadow-sm border-0 mb-4">
-            <div className="card-header bg-primary text-white fw-bold py-3 fs-5">
-                <i className="bi bi-shop"></i> Registrar Nuevo Restaurante y Menú
+        <div className="card shadow border-0 mb-4 rounded-4 bg-white overflow-hidden">
+            
+            {/* Encabezado corporativo estandarizado */}
+            <div className="card-header bg-white border-bottom border-light py-4 px-4">
+                <h4 className="fw-bold mb-0 text-caribe-sobrio">
+                    <i className="bi bi-shop me-2"></i> Registrar Restaurante y Menú
+                </h4>
+                <p className="text-muted small mb-0 mt-1">Sube la información de tu establecimiento y los platos principales que ofreces.</p>
             </div>
-            <div className="card-body p-4 bg-white">
-                {mensaje.texto && <div className={`alert alert-${mensaje.tipo}`}>{mensaje.texto}</div>}
+            
+            <div className="card-body p-4 p-md-5">
+                {mensaje.texto && (
+                    <div className={`alert alert-${mensaje.tipo} rounded-3 border-0 shadow-sm d-flex align-items-center`}>
+                        <i className={`bi bi-${mensaje.tipo === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2 fs-5`}></i>
+                        {mensaje.texto}
+                    </div>
+                )}
                 
                 <form onSubmit={handleSubmit}>
                     {/* SECCIÓN 1: DATOS DEL RESTAURANTE */}
                     <div className="row g-4">
-                        <div className="col-md-12 mb-2 border-bottom pb-2">
-                            <h5 className="text-secondary fw-bold">1. Datos del Establecimiento</h5>
+                        <div className="col-12 mt-2">
+                            <h6 className="fw-bold text-caribe-sobrio mb-3 pb-2 border-bottom border-light text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>
+                                1. Datos del Establecimiento
+                            </h6>
                         </div>
 
                         <div className="col-md-6">
-                            <label className="form-label fw-bold">Nombre del Restaurante</label>
-                            <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="form-control" required />
+                            <label className="form-label fw-semibold text-secondary small text-uppercase">Nombre del Restaurante</label>
+                            <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="form-control form-control-lg bg-light border-0" placeholder="Ej. Restaurante El Pargo Real" required />
                         </div>
                         <div className="col-md-6">
-                            <label className="form-label fw-bold">Municipio</label>
-                            <select name="municipio" value={formData.municipio} onChange={handleChange} className="form-control" required>
+                            <label className="form-label fw-semibold text-secondary small text-uppercase">Municipio</label>
+                            <select name="municipio" value={formData.municipio} onChange={handleChange} className="form-select form-select-lg bg-light border-0" required>
                                 <option value="">Selecciona un municipio...</option>
                                 <option value="Coveñas">Coveñas</option>
                                 <option value="Tolú">Tolú</option>
@@ -125,8 +133,8 @@ export const FormularioGastronomia = () => {
                             </select>
                         </div>
                         <div className="col-md-6">
-                            <label className="form-label fw-bold">Tipo de Comida</label>
-                            <select className="form-select" name="tipo" value={formData.tipo} onChange={handleChange} required>
+                            <label className="form-label fw-semibold text-secondary small text-uppercase">Tipo de Comida</label>
+                            <select className="form-select form-select-lg bg-light border-0" name="tipo" value={formData.tipo} onChange={handleChange} required>
                                 <option value="">Seleccione una opción...</option>
                                 <option value="Almuerzo / Corriente">Almuerzo / Corriente</option>
                                 <option value="Mariscos y Pescados">Mariscos y Pescados</option>
@@ -136,89 +144,104 @@ export const FormularioGastronomia = () => {
                             </select>
                         </div>
                         <div className="col-md-6">
-                            <label className="form-label fw-bold">Dirección</label>
-                            <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} className="form-control" required />
+                            <label className="form-label fw-semibold text-secondary small text-uppercase">Dirección</label>
+                            <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} className="form-control form-control-lg bg-light border-0" placeholder="Ej. Calle 1 #2-3 Playa Principal" required />
                         </div>
 
                         <div className="col-md-12 mt-4">
-                            <label className="form-label fw-bold text-primary"><i className="bi bi-file-earmark-image"></i> Subir Imagen de Portada (.jpg, .png)</label>
-                            <input 
-                                type="file" 
-                                id="imagen_restaurante" 
-                                ref={inputRestauranteRef}
-                                accept="image/*" 
-                                onChange={handleFileChange} 
-                                className="form-control" 
-                            />
+                            <div className="p-4 border rounded-4 bg-light border-dashed text-center">
+                                <label className="form-label fw-bold text-caribe-sobrio d-block mb-3 cursor-pointer">
+                                    <i className="bi bi-cloud-arrow-up display-4 d-block mb-2"></i> 
+                                    Subir Imagen de Portada (.jpg, .png)
+                                </label>
+                                <input 
+                                    type="file" 
+                                    id="imagen_restaurante" 
+                                    ref={inputRestauranteRef}
+                                    accept="image/*" 
+                                    onChange={handleFileChange} 
+                                    className="form-control d-none" 
+                                />
+                                <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => document.getElementById('imagen_restaurante').click()}>
+                                    Explorar Archivos
+                                </button>
+                                {imagen && <p className="text-success mt-3 mb-0 fw-semibold"><i className="bi bi-check-lg me-1"></i> Archivo seleccionado: {imagen.name}</p>}
+                            </div>
                         </div>
 
                         <div className="col-md-12 mt-3">
-                            <label className="form-label fw-bold">Descripción del Restaurante</label>
-                            <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-control" rows="3" required></textarea>
+                            <label className="form-label fw-semibold text-secondary small text-uppercase">Descripción del Restaurante</label>
+                            <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-control bg-light border-0" rows="3" placeholder="Cuéntanos sobre el ambiente, historia o especialidades del lugar..." required></textarea>
                         </div>
                     </div>
 
                     {/* SECCIÓN 2: DATOS DEL MENÚ / PLATOS */}
-                    <div className="row g-4 mt-4">
-                        <div className="col-md-12 mb-2 border-bottom pb-2">
-                            <h5 className="text-success fw-bold">2. Agregar Platos al Menú</h5>
-                            <small className="text-muted">Añade los platos principales que ofrecerá este restaurante.</small>
+                    <div className="row g-4 mt-5">
+                        <div className="col-12 mt-2">
+                            <h6 className="fw-bold text-caribe-sobrio mb-3 pb-2 border-bottom border-light text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>
+                                2. Configurar Menú
+                            </h6>
                         </div>
 
                         {platos.map((plato, index) => (
                             <div key={index} className="col-12">
-                                <div className="card bg-light border-success bg-opacity-10 p-3 position-relative">
+                                <div className="card bg-white border border-light shadow-sm rounded-4 p-4 position-relative">
                                     {platos.length > 1 && (
                                         <button 
                                             type="button" 
-                                            className="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2"
+                                            className="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-3 rounded-circle"
                                             onClick={() => eliminarPlato(index)}
+                                            title="Eliminar plato"
+                                            style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         >
-                                            <i className="bi bi-trash"></i> Eliminar
+                                            <i className="bi bi-x-lg"></i>
                                         </button>
                                     )}
                                     
-                                    <h6 className="text-success fw-bold mb-3">Plato #{index + 1}</h6>
+                                    <h6 className="text-muted fw-bold mb-4 text-uppercase small"><i className="bi bi-hash"></i> Plato {index + 1}</h6>
                                     
                                     <div className="row g-3">
                                         <div className="col-md-6">
-                                            <label className="form-label">Nombre del Plato</label>
+                                            <label className="form-label fw-semibold text-secondary small">Nombre del Plato</label>
                                             <input 
                                                 type="text" 
-                                                className="form-control" 
+                                                className="form-control bg-light border-0" 
                                                 value={plato.nombre}
                                                 onChange={(e) => handlePlatoChange(index, 'nombre', e.target.value)}
-                                                placeholder="Ej. Mote de Queso"
+                                                placeholder="Ej. Mote de Queso Tradicional"
                                             />
                                         </div>
                                         <div className="col-md-6">
-                                            <label className="form-label">Precio (COP)</label>
-                                            <input 
-                                                type="number" 
-                                                className="form-control" 
-                                                value={plato.precio}
-                                                onChange={(e) => handlePlatoChange(index, 'precio', e.target.value)}
-                                                placeholder="Ej. 25000"
-                                            />
+                                            <label className="form-label fw-semibold text-secondary small">Precio (COP)</label>
+                                            <div className="input-group">
+                                                <span className="input-group-text bg-light border-0 text-muted">$</span>
+                                                <input 
+                                                    type="number" 
+                                                    className="form-control bg-light border-0" 
+                                                    value={plato.precio}
+                                                    onChange={(e) => handlePlatoChange(index, 'precio', e.target.value)}
+                                                    placeholder="Ej. 25000"
+                                                />
+                                            </div>
                                         </div>
                                         <div className="col-md-12">
-                                            <label className="form-label">Descripción del Plato</label>
+                                            <label className="form-label fw-semibold text-secondary small">Descripción del Plato</label>
                                             <textarea 
-                                                className="form-control" 
+                                                className="form-control bg-light border-0" 
                                                 value={plato.descripcion}
                                                 onChange={(e) => handlePlatoChange(index, 'descripcion', e.target.value)}
                                                 rows="2"
-                                                placeholder="Queso costeño, ñame, suero..."
+                                                placeholder="Queso costeño, ñame, suero, ajo..."
                                             ></textarea>
                                         </div>
-                                        <div className="col-md-12">
-                                            <label className="form-label"><i className="bi bi-image"></i> Foto del Plato (Opcional)</label>
+                                        <div className="col-md-12 mt-3">
+                                            <label className="form-label fw-semibold text-caribe-sobrio small"><i className="bi bi-camera me-1"></i> Foto del Plato (Opcional)</label>
                                             <input 
                                                 type="file" 
                                                 accept="image/*" 
                                                 ref={(el) => (platosFileRefs.current[index] = el)}
                                                 onChange={(e) => handlePlatoFileChange(index, e.target.files[0])} 
-                                                className="form-control" 
+                                                className="form-control form-control-sm bg-light border-0" 
                                             />
                                         </div>
                                     </div>
@@ -227,15 +250,16 @@ export const FormularioGastronomia = () => {
                         ))}
 
                         <div className="col-12 mt-3">
-                            <button type="button" className="btn btn-outline-success fw-bold" onClick={agregarOtroPlato}>
-                                <i className="bi bi-plus-circle"></i> Agregar otro plato
+                            <button type="button" className="btn btn-light fw-bold text-caribe-sobrio border-dashed w-100 py-3 rounded-4" onClick={agregarOtroPlato}>
+                                <i className="bi bi-plus-circle-fill me-2"></i> Añadir otro plato al menú
                             </button>
                         </div>
                     </div>
 
-                    <div className="col-12 mt-5">
-                        <button type="submit" className="btn btn-primary fw-bold px-5 py-3 w-100 shadow-sm fs-5">
-                            <i className="bi bi-save"></i> Guardar Restaurante y Menú
+                    <div className="col-12 mt-5 text-end border-top pt-4">
+                        <button type="button" className="btn btn-light me-3 rounded-pill px-4 fw-bold text-muted">Cancelar</button>
+                        <button type="submit" className="btn btn-caribe-sobrio fw-bold px-5 py-2 shadow rounded-pill">
+                            <i className="bi bi-save me-2"></i> Guardar Restaurante y Menú
                         </button>
                     </div>
                 </form>
