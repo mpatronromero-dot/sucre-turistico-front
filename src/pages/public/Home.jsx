@@ -389,6 +389,39 @@ export const Home = () => {
         </div>
 
       </div>
+      {/* FOOTER CORPORATIVO Y CRÉDITOS */}
+        <footer className="text-white pt-5 pb-4 mt-5 shadow-lg" style={{ backgroundColor: '#1a2e3b' }}>
+          <div className="container text-center">
+            <div className="mb-4">
+              <i className="bi bi-water fs-1" style={{ color: '#2dd4bf' }}></i>
+              <h4 className="fw-bold mt-2 mb-2" style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '1px' }}>Sucre Turístico</h4>
+              <p className="opacity-75 small mx-auto" style={{ maxWidth: '500px' }}>
+                Plataforma tecnológica multi-tenant para la promoción inteligente del turismo, la gastronomía y la cultura en el Golfo de Morrosquillo.
+              </p>
+            </div>
+            
+            <div className="border-top border-light border-opacity-10 pt-4 mt-4">
+              <p className="mb-2 small opacity-75">
+                &copy; {new Date().getFullYear()} Sucre Turístico. Todos los derechos reservados.
+              </p>
+              <p className="mb-1 small opacity-75">
+                Proyecto Integrador de Ingeniería de Sistemas <br/>
+                Arquitectura y Desarrollo por <strong style={{ color: '#2dd4bf' }}>Moisés Patrón</strong>
+              </p>
+              <div className="mt-2">
+                <span className="badge bg-dark border border-secondary text-light fw-normal py-1 px-2 mx-1">
+                  <i className="bi bi-kanban me-1"></i> Scrum Master
+                </span>
+                <span className="badge bg-dark border border-secondary text-light fw-normal py-1 px-2 mx-1">
+                  <i className="bi bi-code-slash me-1"></i> Full-Stack Dev
+                </span>
+                <span className="badge bg-dark border border-secondary text-light fw-normal py-1 px-2 mx-1">
+                  <i className="bi bi-mortarboard me-1"></i> Corposucre
+                </span>
+              </div>
+            </div>
+          </div>
+        </footer>
     </>
   );
 };

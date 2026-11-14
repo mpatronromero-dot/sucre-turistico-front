@@ -6,28 +6,44 @@ export const GestionHabitaciones = () => {
     const [hotelSeleccionado, setHotelSeleccionado] = useState('');
     const [habitaciones, setHabitaciones] = useState([]);
     
-    // Estado para el formulario (sirve para Crear y Editar)
+    // Estado para el formulario (Crear y Editar)
     const [modoEdicion, setModoEdicion] = useState(false);
     const [habitacionIdEdit, setHabitacionIdEdit] = useState(null);
     const [formData, setFormData] = useState({ nombre: '', precio: '', descripcion: '' });
     const [imagen, setImagen] = useState(null);
 
-    // 1. Cargar SOLO los hoteles del usuario logueado
-    useEffect(() => {
-        const cargarMisHoteles = async () => {
-            try {
-                const usuarioId = localStorage.getItem('usuario_id');
-                if (!usuarioId) return;
+    // 1. Cargar la lista de alojamientos con lógica de ROLES
+    const cargarMisHoteles = async () => {
+        try {
+            const usuarioId = localStorage.getItem('usuario_id');
+            const rolUsuario = localStorage.getItem('rol_usuario'); // Detectamos si eres tú (Modo Dios)
+            if (!usuarioId) return;
+            
+            const url = rolUsuario === 'superadmin' 
+                ? '/alojamientos' 
+                : `/alojamientos/mis-alojamientos/${usuarioId}`;
                 
-                const res = await api.get(`/alojamientos/mis-alojamientos/${usuarioId}`);
-                const listaHoteles = Array.isArray(res.data) ? res.data : (res.data.data || []);
-                setAlojamientos(listaHoteles);
-            } catch (err) {
-                console.error("Error cargando los hoteles del usuario", err);
+            const res = await api.get(url);
+            const listaHoteles = Array.isArray(res.data) ? res.data : (res.data.data || res.data.alojamientos || []);
+            setAlojamientos(listaHoteles);
+            
+            // Si el hotel seleccionado ya no existe (porque se eliminó), limpiar selección
+            if (hotelSeleccionado && !listaHoteles.some(h => h.id.toString() === hotelSeleccionado)) {
+                setHotelSeleccionado('');
+                setHabitaciones([]);
             }
-        };
+        } catch (err) {
+            console.error("Error cargando los hoteles del usuario", err);
+        }
+    };
+
+    useEffect(() => {
         cargarMisHoteles();
-    }, []);
+
+        // ESCUCHADOR DE EVENTOS: Cuando el FormularioAlojamiento crea/elimina, este componente se actualiza automáticamente.
+        window.addEventListener('alojamientosActualizados', cargarMisHoteles);
+        return () => window.removeEventListener('alojamientosActualizados', cargarMisHoteles);
+    }, [hotelSeleccionado]);
 
     // 2. Cargar habitaciones cuando se selecciona un hotel
     useEffect(() => {
@@ -84,14 +100,15 @@ export const GestionHabitaciones = () => {
         data.append('nombre', formData.nombre);
         data.append('precio', formData.precio);
         data.append('descripcion', formData.descripcion);
-        if (!modoEdicion) data.append('alojamiento_id', hotelSeleccionado);
         if (imagen) data.append('imagen', imagen);
 
         try {
             if (modoEdicion) {
+                // Si tienes una ruta específica para actualizar habitación, déjala o ajústala también
                 await api.put(`/habitaciones/${habitacionIdEdit}`, data);
             } else {
-                await api.post('/habitaciones', data);
+                // --- CAMBIO AQUÍ: Usamos la ruta anidada del alojamiento ---
+                await api.post(`/alojamientos/${hotelSeleccionado}/habitaciones`, data);
             }
             cancelarEdicion();
             cargarHabitaciones(hotelSeleccionado);
@@ -115,27 +132,24 @@ export const GestionHabitaciones = () => {
 
     return (
         <div className="card shadow-sm border-0 mb-4 rounded-4 bg-white overflow-hidden mt-2">
-            
-            {/* Encabezado elegante unificado */}
             <div className="card-header bg-white border-bottom border-light py-4 px-4">
                 <h4 className="fw-bold mb-0 text-caribe-sobrio">
                     <i className="bi bi-door-open me-2"></i> Gestión de Habitaciones (Paso 2)
                 </h4>
-                <p className="text-muted small mb-0 mt-1">Selecciona tu alojamiento para agregar o editar las habitaciones disponibles.</p>
+                <p className="text-muted small mb-0 mt-1">Selecciona un alojamiento para gestionar su inventario de habitaciones.</p>
             </div>
 
             <div className="card-body p-4 p-md-5">
-                
                 {/* Buscador del Hotel Integrado */}
                 <div className="mb-5 p-4 bg-light rounded-4 border border-light">
                     <label className="form-label fw-bold text-dark mb-2 d-block fs-5">
-                        Mis Alojamientos Registrados
+                        {localStorage.getItem('rol_usuario') === 'superadmin' ? 'Todos los Establecimientos' : 'Tus Establecimientos Activos'}
                     </label>
-                    <p className="text-muted small mb-4">Haz clic en uno de tus alojamientos a continuación para agregarle o editar sus habitaciones.</p>
+                    <p className="text-muted small mb-4">Haz clic en uno de los alojamientos a continuación para gestionar sus habitaciones.</p>
 
                     {alojamientos.length === 0 ? (
                         <div className="alert border-0 shadow-sm fw-semibold" style={{ backgroundColor: '#fdf6b2', color: '#723b13' }}>
-                            <i className="bi bi-info-circle me-2"></i> Aún no tienes alojamientos. ¡Registra el primero en el formulario de arriba!
+                            <i className="bi bi-info-circle me-2"></i> No hay alojamientos disponibles. ¡Registra el primero arriba!
                         </div>
                     ) : (
                         <div className="d-flex flex-wrap gap-3">
@@ -146,7 +160,7 @@ export const GestionHabitaciones = () => {
                                     onClick={() => setHotelSeleccionado(h.id.toString())}
                                     className={`btn rounded-pill px-4 py-2 fw-semibold shadow-sm border ${
                                         hotelSeleccionado === h.id.toString()
-                                        ? 'btn-caribe-sobrio border-0' 
+                                        ? 'btn-caribe-sobrio border-0 text-white' 
                                         : 'btn-white bg-white text-secondary'
                                     }`}
                                     style={{ 
@@ -164,7 +178,6 @@ export const GestionHabitaciones = () => {
 
                 {hotelSeleccionado && (
                     <div className="row g-5">
-                        
                         {/* FORMULARIO DE AGREGAR / EDITAR */}
                         <div className="col-lg-4">
                             <h5 className={`fw-bold mb-4 ${modoEdicion ? 'text-warning' : 'text-caribe-sobrio'}`}>
@@ -190,18 +203,18 @@ export const GestionHabitaciones = () => {
                                     {modoEdicion && <small className="text-muted d-block mt-2 fst-italic">Si no seleccionas nada, se conservará la foto anterior.</small>}
                                 </div>
                                 
-                                <button type="submit" className={`btn w-100 fw-bold shadow-sm py-2 ${modoEdicion ? 'btn-warning text-dark' : 'btn-caribe-sobrio'}`}>
+                                <button type="submit" className={`btn w-100 fw-bold shadow-sm py-2 rounded-pill ${modoEdicion ? 'btn-warning text-dark' : 'btn-caribe-sobrio'}`}>
                                     {modoEdicion ? 'Actualizar Habitación' : 'Guardar Habitación'}
                                 </button>
                                 {modoEdicion && (
-                                    <button type="button" onClick={cancelarEdicion} className="btn btn-light w-100 mt-2 fw-semibold text-muted">Cancelar Edición</button>
+                                    <button type="button" onClick={cancelarEdicion} className="btn btn-light w-100 mt-2 fw-semibold text-muted rounded-pill">Cancelar Edición</button>
                                 )}
                             </form>
                         </div>
 
                         {/* TABLA DEL CATÁLOGO ACTUAL */}
                         <div className="col-lg-8">
-                            <h5 className="fw-bold text-dark mb-4 border-bottom pb-2">Catálogo Actualizado</h5>
+                            <h5 className="fw-bold text-dark mb-4 border-bottom pb-2">Inventario de Habitaciones</h5>
                             
                             {habitaciones.length === 0 ? (
                                 <div className="alert alert-light text-center border-dashed rounded-4 p-5 text-muted">
