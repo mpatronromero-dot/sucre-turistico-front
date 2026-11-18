@@ -51,10 +51,10 @@ export const Alojamientos = () => {
       
       <div className="row g-4">
         {/* ==========================================
-            BARRA LATERAL (FILTROS TIPO E-COMMERCE)
+            BARRA LATERAL (FILTROS ESTÁTICOS)
         ========================================== */}
         <div className="col-lg-3">
-          <div className="card shadow-sm border-0 p-4 sticky-top rounded-4 bg-white" style={{ top: '20px' }}>
+          <div className="card shadow-sm border-0 p-4 rounded-4 bg-white">
             <h5 className="fw-bold mb-4 text-dark"><i className="bi bi-funnel-fill text-primary me-2"></i> Filtros</h5>
             
             <div className="mb-4">

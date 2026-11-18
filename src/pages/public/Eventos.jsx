@@ -58,9 +58,9 @@ export const Eventos = () => {
       <h2 className="fw-bold mb-4">Agenda y Eventos</h2>
       <div className="row">
         
-        {/* Sidebar de Filtros */}
+        {/* Sidebar de Filtros (Estático, sin sticky-top) */}
         <div className="col-lg-3 mb-4">
-          <div className="card shadow-sm border-0 p-4 sticky-top" style={{ top: '20px' }}>
+          <div className="card shadow-sm border-0 p-4 rounded-4">
             <h5 className="fw-bold mb-4"><i className="bi bi-funnel-fill text-info"></i> Filtros</h5>
             <div className="mb-4">
               <label className="fw-semibold mb-2">Mes del evento</label>

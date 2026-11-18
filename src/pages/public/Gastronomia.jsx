@@ -52,9 +52,9 @@ export const Gastronomia = () => {
       <h2 className="fw-bold mb-4">Gastronomía en Sucre</h2>
       
       <div className="row">
-        {/* BARRA LATERAL (SIDEBAR DE FILTROS) */}
+        {/* BARRA LATERAL (SIDEBAR DE FILTROS ESTÁTICO) */}
         <div className="col-lg-3 mb-4">
-          <div className="card shadow-sm border-0 p-4 sticky-top" style={{ top: '20px' }}>
+          <div className="card shadow-sm border-0 p-4">
             <h5 className="fw-bold mb-4"><i className="bi bi-funnel-fill text-primary"></i> Filtros</h5>
             
             {/* Filtro: Municipio */}
