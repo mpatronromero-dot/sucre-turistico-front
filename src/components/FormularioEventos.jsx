@@ -1,7 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 export const FormularioEventos = () => {
+    const [eventos, setEventos] = useState([]);
+    const [modoEdicion, setModoEdicion] = useState(false);
+    const [eventoIdEdit, setEventoIdEdit] = useState(null);
+
     const [formData, setFormData] = useState({
         nombre: '',
         fecha_inicio: '',
@@ -12,8 +16,21 @@ export const FormularioEventos = () => {
     const [imagen, setImagen] = useState(null);
     const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
 
-    // Referencia para limpiar el input file visualmente
     const inputFileRef = useRef(null);
+
+    const cargarEventos = async () => {
+        try {
+            const res = await axios.get('http://localhost:3006/api/eventos');
+            const lista = Array.isArray(res.data) ? res.data : (res.data.data || []);
+            setEventos(lista);
+        } catch (error) {
+            console.error('Error al cargar eventos:', error);
+        }
+    };
+
+    useEffect(() => {
+        cargarEventos();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,6 +38,42 @@ export const FormularioEventos = () => {
 
     const handleFileChange = (e) => {
         setImagen(e.target.files[0]);
+    };
+
+    // Extrae la primera imagen en caso de que imagen_url sea un arreglo JSON
+    const obtenerPortada = (imagenUrl) => {
+        if (!imagenUrl) return null;
+        try {
+            const parsed = JSON.parse(imagenUrl);
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : imagenUrl;
+        } catch {
+            return imagenUrl;
+        }
+    };
+
+    // Preparar Modo Edición (formateando fechas ISO a YYYY-MM-DD para el input date)
+    const prepararEdicion = (ev) => {
+        setModoEdicion(true);
+        setEventoIdEdit(ev.id);
+        setFormData({
+            nombre: ev.nombre || '',
+            fecha_inicio: ev.fecha_inicio ? String(ev.fecha_inicio).split('T')[0] : '',
+            fecha_fin: ev.fecha_fin ? String(ev.fecha_fin).split('T')[0] : '',
+            municipio: ev.municipio || 'Sincelejo',
+            descripcion: ev.descripcion || ''
+        });
+        setImagen(null);
+        if (inputFileRef.current) inputFileRef.current.value = "";
+
+        document.getElementById('formulario-eventos-scroll')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const cancelarEdicion = () => {
+        setModoEdicion(false);
+        setEventoIdEdit(null);
+        setFormData({ nombre: '', fecha_inicio: '', fecha_fin: '', municipio: 'Sincelejo', descripcion: '' });
+        setImagen(null);
+        if (inputFileRef.current) inputFileRef.current.value = "";
     };
 
     const handleSubmit = async (e) => {
@@ -39,117 +92,201 @@ export const FormularioEventos = () => {
         }
 
         try {
-            // El microservicio de eventos corre en el puerto 3006
-            await axios.post('http://localhost:3006/api/eventos', data);
-            
-            setMensaje({ texto: '¡Evento cultural registrado y publicado con éxito!', tipo: 'success' });
-            
-            // Limpiamos el formulario
-            setFormData({ nombre: '', fecha_inicio: '', fecha_fin: '', municipio: 'Sincelejo', descripcion: '' });
-            setImagen(null);
-            
-            if (inputFileRef.current) {
-                inputFileRef.current.value = "";
+            if (modoEdicion) {
+                await axios.put(`http://localhost:3006/api/eventos/${eventoIdEdit}`, data);
+                setMensaje({ texto: '¡Evento cultural actualizado correctamente!', tipo: 'success' });
+            } else {
+                await axios.post('http://localhost:3006/api/eventos', data);
+                setMensaje({ texto: '¡Evento cultural registrado y publicado con éxito!', tipo: 'success' });
             }
+            
+            cancelarEdicion();
+            cargarEventos();
         } catch (error) {
             console.error(error);
-            setMensaje({ texto: 'Error al registrar el evento. Verifica la conexión con el servidor.', tipo: 'danger' });
+            setMensaje({ texto: 'Error al procesar el evento. Verifica la conexión con el servidor.', tipo: 'danger' });
+        }
+    };
+
+    const eliminarEvento = async (id) => {
+        if (window.confirm("¿Estás seguro de eliminar este evento cultural del catálogo?")) {
+            try {
+                await axios.delete(`http://localhost:3006/api/eventos/${id}`);
+                setMensaje({ texto: 'Evento eliminado del catálogo.', tipo: 'success' });
+                cargarEventos();
+            } catch (error) {
+                console.error("Error al eliminar evento:", error);
+                setMensaje({ texto: 'Error al eliminar el evento.', tipo: 'danger' });
+            }
         }
     };
 
     return (
-        <div className="card shadow border-0 mb-4 rounded-4 bg-white overflow-hidden">
-            
-            {/* Encabezado limpio y corporativo */}
-            <div className="card-header bg-white border-bottom border-light py-4 px-4">
-                <h4 className="fw-bold mb-0 text-caribe-sobrio">
-                    <i className="bi bi-calendar-event me-2"></i> Registrar Nuevo Evento o Festividad
-                </h4>
-                <p className="text-muted small mb-0 mt-1">Sube la información de las fiestas y eventos culturales que enriquecen al Golfo.</p>
+        <div className="d-flex flex-column gap-4">
+
+            {/* SECCIÓN 1: TABLA DE EVENTOS REGISTRADOS */}
+            <div className="card shadow-sm border-0 rounded-4 bg-white overflow-hidden">
+                <div className="card-header bg-white border-bottom border-light py-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 className="fw-bold mb-0 text-dark">
+                        <i className="bi bi-list-check me-2 text-caribe-sobrio"></i> Catálogo General de Eventos
+                    </h5>
+                </div>
+                <div className="card-body p-0">
+                    {eventos.length === 0 ? (
+                        <div className="p-5 text-center text-muted">
+                            <i className="bi bi-calendar-x display-4 d-block mb-3 opacity-50"></i>
+                            <p className="mb-0">No hay eventos registrados. Utiliza el formulario de abajo para crear el primero.</p>
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-hover align-middle mb-0">
+                                <thead className="bg-light text-muted" style={{ fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                                    <tr>
+                                        <th className="px-4 py-3 border-0">Afiche</th>
+                                        <th className="px-4 py-3 border-0">Evento / Festividad</th>
+                                        <th className="px-4 py-3 border-0">Ubicación</th>
+                                        <th className="px-4 py-3 border-0 text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {eventos.map(ev => {
+                                        const portada = obtenerPortada(ev.imagen_url);
+                                        return (
+                                            <tr key={ev.id}>
+                                                <td className="px-4 py-3">
+                                                    {portada ? (
+                                                        <img src={portada} alt={ev.nombre} className="rounded object-fit-cover shadow-sm" style={{ width: '50px', height: '50px' }} />
+                                                    ) : (
+                                                        <div className="bg-light rounded text-center pt-2 text-muted" style={{ width: '50px', height: '50px' }}>
+                                                            <i className="bi bi-image fs-5"></i>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="fw-bold text-dark">{ev.nombre}</div>
+                                                    <small className="text-muted">
+                                                        <span className="badge bg-light text-dark border">
+                                                            {ev.fecha_inicio ? String(ev.fecha_inicio).split('T')[0] : 'Sin fecha'}
+                                                        </span>
+                                                    </small>
+                                                </td>
+                                                <td className="px-4 py-3 text-muted">{ev.municipio}</td>
+                                                <td className="px-4 py-3 text-end">
+                                                    <button onClick={() => prepararEdicion(ev)} className="btn btn-sm btn-light text-primary border me-2" title="Editar Evento">
+                                                        <i className="bi bi-pencil-fill"></i>
+                                                    </button>
+                                                    <button onClick={() => eliminarEvento(ev.id)} className="btn btn-sm btn-light text-danger border" title="Eliminar Evento">
+                                                        <i className="bi bi-trash-fill"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
-            
-            <div className="card-body p-4 p-md-5">
-                {mensaje.texto && (
-                    <div className={`alert alert-${mensaje.tipo} rounded-3 border-0 shadow-sm d-flex align-items-center`}>
-                        <i className={`bi bi-${mensaje.tipo === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2 fs-5`}></i>
-                        {mensaje.texto}
-                    </div>
-                )}
+
+            {/* SECCIÓN 2: FORMULARIO CREAR / EDITAR */}
+            <div id="formulario-eventos-scroll" className="card shadow border-0 mb-4 rounded-4 bg-white overflow-hidden">
+                <div className="card-header bg-white border-bottom border-light py-4 px-4">
+                    <h4 className={`fw-bold mb-0 ${modoEdicion ? 'text-warning' : 'text-caribe-sobrio'}`}>
+                        <i className={`bi ${modoEdicion ? 'bi-pencil-square' : 'bi-calendar-event'} me-2`}></i> 
+                        {modoEdicion ? 'Editar Evento Cultural' : 'Registrar Nuevo Evento o Festividad'}
+                    </h4>
+                    <p className="text-muted small mb-0 mt-1">
+                        {modoEdicion ? 'Modifica las fechas, ubicación o detalles del evento.' : 'Sube la información de las fiestas y eventos culturales que enriquecen al Golfo.'}
+                    </p>
+                </div>
                 
-                <form onSubmit={handleSubmit}>
-                    <div className="row g-4">
-                        
-                        <div className="col-12 mt-2">
-                            <h6 className="fw-bold text-caribe-sobrio mb-3 pb-2 border-bottom border-light text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>
-                                1. Información del Evento
-                            </h6>
+                <div className="card-body p-4 p-md-5">
+                    {mensaje.texto && (
+                        <div className={`alert alert-${mensaje.tipo} rounded-3 border-0 shadow-sm d-flex align-items-center`}>
+                            <i className={`bi bi-${mensaje.tipo === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2 fs-5`}></i>
+                            {mensaje.texto}
                         </div>
-                        
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold text-secondary small text-uppercase">Nombre del Evento / Festividad</label>
-                            <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="form-control form-control-lg bg-light border-0" placeholder="Ej. Festival Nacional de la Gaita" required />
-                        </div>
+                    )}
+                    
+                    <form onSubmit={handleSubmit}>
+                        <div className="row g-4">
+                            <div className="col-12 mt-2">
+                                <h6 className="fw-bold text-caribe-sobrio mb-3 pb-2 border-bottom border-light text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>
+                                    1. Información del Evento
+                                </h6>
+                            </div>
+                            
+                            <div className="col-md-12">
+                                <label className="form-label fw-semibold text-secondary small text-uppercase">Nombre del Evento / Festividad</label>
+                                <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="form-control form-control-lg bg-light border-0" placeholder="Ej. Festival Nacional de la Gaita" required />
+                            </div>
 
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold text-secondary small text-uppercase">Fecha de Inicio</label>
-                            <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleChange} className="form-control form-control-lg bg-light border-0 text-muted" required />
-                        </div>
+                            <div className="col-md-6">
+                                <label className="form-label fw-semibold text-secondary small text-uppercase">Fecha de Inicio</label>
+                                <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleChange} className="form-control form-control-lg bg-light border-0 text-muted" required />
+                            </div>
 
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold text-secondary small text-uppercase">Fecha de Finalización</label>
-                            <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleChange} className="form-control form-control-lg bg-light border-0 text-muted" />
-                        </div>
+                            <div className="col-md-6">
+                                <label className="form-label fw-semibold text-secondary small text-uppercase">Fecha de Finalización</label>
+                                <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleChange} className="form-control form-control-lg bg-light border-0 text-muted" />
+                            </div>
 
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold text-secondary small text-uppercase">Municipio</label>
-                            <select name="municipio" value={formData.municipio} onChange={handleChange} className="form-select form-select-lg bg-light border-0">
-                                <option value="Sincelejo">Sincelejo</option>
-                                <option value="Tolú">Santiago de Tolú</option>
-                                <option value="Coveñas">Coveñas</option>
-                                <option value="San Onofre">San Onofre</option>
-                            </select>
-                        </div>
+                            <div className="col-md-12">
+                                <label className="form-label fw-semibold text-secondary small text-uppercase">Municipio</label>
+                                <select name="municipio" value={formData.municipio} onChange={handleChange} className="form-select form-select-lg bg-light border-0">
+                                    <option value="Sincelejo">Sincelejo</option>
+                                    <option value="Tolú">Santiago de Tolú</option>
+                                    <option value="Coveñas">Coveñas</option>
+                                    <option value="San Onofre">San Onofre</option>
+                                </select>
+                            </div>
 
-                        <div className="col-12 mt-5">
-                            <h6 className="fw-bold text-caribe-sobrio mb-3 pb-2 border-bottom border-light text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>
-                                2. Promoción y Detalles
-                            </h6>
-                        </div>
-                        
-                        <div className="col-md-12">
-                            <div className="p-4 border rounded-4 bg-light border-dashed text-center">
-                                <label className="form-label fw-bold text-caribe-sobrio d-block mb-3 cursor-pointer">
-                                    <i className="bi bi-file-earmark-image display-4 d-block mb-2"></i> 
-                                    Subir Afiche Promocional (.jpg, .png)
-                                </label>
-                                <input 
-                                    type="file" 
-                                    id="archivo_afiche_evento" 
-                                    ref={inputFileRef}
-                                    accept="image/*" 
-                                    onChange={handleFileChange} 
-                                    className="form-control d-none" 
-                                />
-                                <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => document.getElementById('archivo_afiche_evento').click()}>
-                                    Explorar Archivos
+                            <div className="col-12 mt-5">
+                                <h6 className="fw-bold text-caribe-sobrio mb-3 pb-2 border-bottom border-light text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>
+                                    2. Promoción y Detalles
+                                </h6>
+                            </div>
+                            
+                            <div className="col-md-12">
+                                <div className="p-4 border rounded-4 bg-light border-dashed text-center">
+                                    <label className="form-label fw-bold text-caribe-sobrio d-block mb-3 cursor-pointer">
+                                        <i className="bi bi-file-earmark-image display-4 d-block mb-2"></i> 
+                                        Subir Afiche Promocional (.jpg, .png)
+                                    </label>
+                                    <input 
+                                        type="file" 
+                                        id="archivo_afiche_evento" 
+                                        ref={inputFileRef}
+                                        accept="image/*" 
+                                        onChange={handleFileChange} 
+                                        className="form-control d-none" 
+                                    />
+                                    <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => document.getElementById('archivo_afiche_evento').click()}>
+                                        Explorar Archivos
+                                    </button>
+                                    {imagen && <p className="text-success mt-3 mb-0 fw-semibold"><i className="bi bi-check-lg me-1"></i> Archivo seleccionado: {imagen.name}</p>}
+                                    {modoEdicion && !imagen && <p className="text-muted mt-3 mb-0 small fst-italic">Si no seleccionas afiche, se mantendrá la imagen actual.</p>}
+                                </div>
+                            </div>
+
+                            <div className="col-md-12 mt-3">
+                                <label className="form-label fw-semibold text-secondary small text-uppercase">Descripción de la Festividad</label>
+                                <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-control bg-light border-0" rows="4" placeholder="Detalles, desfiles, conciertos, programación principal y por qué no deben perdérselo..." required></textarea>
+                            </div>
+
+                            <div className="col-12 mt-5 text-end border-top pt-4">
+                                <button type="button" onClick={cancelarEdicion} className="btn btn-light me-3 rounded-pill px-4 fw-bold text-muted">
+                                    {modoEdicion ? 'Cancelar Edición' : 'Cancelar'}
                                 </button>
-                                {imagen && <p className="text-success mt-3 mb-0 fw-semibold"><i className="bi bi-check-lg me-1"></i> Archivo seleccionado: {imagen.name}</p>}
+                                <button type="submit" className={`btn fw-bold px-5 py-2 shadow rounded-pill ${modoEdicion ? 'btn-warning text-dark' : 'btn-caribe-sobrio'}`}>
+                                    <i className={`bi ${modoEdicion ? 'bi-arrow-repeat' : 'bi-calendar-check'} me-2`}></i> 
+                                    {modoEdicion ? 'Actualizar Evento' : 'Publicar Evento Cultural'}
+                                </button>
                             </div>
                         </div>
-
-                        <div className="col-md-12 mt-3">
-                            <label className="form-label fw-semibold text-secondary small text-uppercase">Descripción de la Festividad</label>
-                            <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-control bg-light border-0" rows="4" placeholder="Detalles, desfiles, conciertos, programación principal y por qué no deben perdérselo..." required></textarea>
-                        </div>
-
-                        <div className="col-12 mt-5 text-end border-top pt-4">
-                            <button type="button" className="btn btn-light me-3 rounded-pill px-4 fw-bold text-muted">Cancelar</button>
-                            <button type="submit" className="btn btn-caribe-sobrio fw-bold px-5 py-2 shadow rounded-pill">
-                                <i className="bi bi-calendar-check me-2"></i> Publicar Evento Cultural
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     );
