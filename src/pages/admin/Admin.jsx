@@ -10,10 +10,14 @@ import Swal from 'sweetalert2';
 export const Admin = () => {
   const navigate = useNavigate();
 
-  // --- LÓGICA DE ROLES ---
-  const rolUsuario = localStorage.getItem('rol_usuario') || 'superadmin';
-  // Creamos la bandera del Modo Dios (Super-Usuario)
-  const isSuperAdmin = rolUsuario === 'superadmin';
+  // --- LÓGICA DE ROLES Y USUARIO ---
+  const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || 'null');
+  const rolRaw = localStorage.getItem('rol_usuario') || usuarioGuardado?.rol || 'admin';
+  const rolUsuario = rolRaw.toLowerCase().trim();
+
+  // Reconoce tanto 'admin' (guardado en MySQL) como 'superadmin'
+  const isSuperAdmin = rolUsuario === 'admin' || rolUsuario === 'superadmin';
+  const nombreMostrar = usuarioGuardado?.nombre_encargado || usuarioGuardado?.nombre || 'Administrador';
 
   // --- ESTADO DE NAVEGACIÓN ---
   const [vistaActiva, setVistaActiva] = useState('dashboard');
@@ -65,7 +69,7 @@ export const Admin = () => {
             <i className="bi bi-grid-1x2 me-2"></i> Dashboard
           </button>
           
-          {/* RENDERIZADO CONDICIONAL: Se muestra si es ese rol específico O si es SuperAdmin */}
+          {/* RENDERIZADO CONDICIONAL: Se muestra si es ese rol específico O si es Admin/SuperAdmin */}
           {(rolUsuario === 'alojamiento' || isSuperAdmin) && (
             <button 
               className={`btn text-start w-100 fw-semibold rounded-3 py-2 px-3 transition-hover ${vistaActiva === 'alojamientos' ? 'btn-caribe-sobrio shadow' : 'btn-outline-light border-0 opacity-75'}`}
@@ -109,7 +113,7 @@ export const Admin = () => {
               <i className="bi bi-person-fill fs-5"></i>
             </div>
             <div>
-              <p className="mb-0 fw-bold fs-6">Moisés Patrón</p>
+              <p className="mb-0 fw-bold fs-6">{nombreMostrar}</p>
               <small className={`text-capitalize ${isSuperAdmin ? 'text-warning fw-bold' : 'opacity-75'}`}>
                 {isSuperAdmin ? 'Super Administrador' : rolUsuario}
               </small>
@@ -203,7 +207,9 @@ export const Admin = () => {
                   <tbody>
                     <tr>
                       <td className="px-4 py-3 fw-semibold">Mi Negocio Local</td>
-                      <td className="px-4 py-3 text-muted text-capitalize"><i className="bi bi-shop me-2"></i>{rolUsuario}</td>
+                      <td className="px-4 py-3 text-muted text-capitalize">
+                        <i className="bi bi-shop me-2"></i>{isSuperAdmin ? 'General (Admin)' : rolUsuario}
+                      </td>
                       <td className="px-4 py-3">Santiago de Tolú</td>
                       <td className="px-4 py-3"><span className="badge bg-success bg-opacity-25 text-success rounded-pill px-3">Activo</span></td>
                     </tr>
