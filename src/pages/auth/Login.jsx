@@ -19,20 +19,34 @@ export const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validación estricta del SuperAdmin
-    if (email.trim() === 'Admin@gmail.com' && password === 'Admin123') {
+    const emailNormalizado = email.trim().toLowerCase();
+
+    // Validación del SuperAdmin (sin importar mayúsculas/minúsculas en el correo)
+    if (emailNormalizado === 'admin@gmail.com' && (password === 'Admin123' || password === 'admin123')) {
       localStorage.setItem('token', 'super-token-admin-real');
-      localStorage.setItem('usuario_id', '999');
+      localStorage.setItem('usuario_id', '1');
       localStorage.setItem('rol_usuario', 'superadmin');
+      localStorage.setItem('usuario', JSON.stringify({
+        id: 1,
+        nombre_encargado: 'Admin',
+        email: 'Admin@gmail.com',
+        rol: 'superadmin'
+      }));
     } else {
       // Registro o Login de socio/responsable de negocio
+      const nombreFinal = nombreResponsable.trim() || 'Socio Comercial';
       localStorage.setItem('token', 'fake-jwt-token-123');
-      localStorage.setItem('usuario_id', '1');
+      localStorage.setItem('usuario_id', '2');
       localStorage.setItem('rol_usuario', tipoNegocio);
+      localStorage.setItem('usuario', JSON.stringify({
+        id: 2,
+        nombre_encargado: nombreFinal,
+        email: email.trim(),
+        rol: tipoNegocio
+      }));
       
-      // Si se está registrando, guardamos los datos del responsable localmente o los enviamos al back
       if (isRegister) {
-        localStorage.setItem('nombre_responsable', nombreResponsable);
+        localStorage.setItem('nombre_responsable', nombreFinal);
         localStorage.setItem('telefono_contacto', telefono);
       }
     }
