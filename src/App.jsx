@@ -13,6 +13,7 @@ import { AlojamientoDetalle } from './pages/public/AlojamientoDetalle';
 import { Login } from './pages/auth/Login';
 import { RutaProtegida } from './components/RutaProtegida';
 import { GastronomiaDetalle } from './pages/public/GastronomiaDetalle';
+import { AsistenteVirtual } from './components/AsistenteVirtual';
 import './index.css';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
         
        
       </Routes>
+      <AsistenteVirtual />
     </Router>
   );
 }
